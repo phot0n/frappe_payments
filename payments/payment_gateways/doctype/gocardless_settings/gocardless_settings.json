@@ -10,7 +10,8 @@
   "section_break_2",
   "access_token",
   "webhooks_secret",
-  "use_sandbox"
+  "use_sandbox",
+  "header_img"
  ],
  "fields": [
   {
@@ -75,7 +76,7 @@
   }
  ],
  "links": [],
- "modified": "2023-09-22 13:33:42.225243",
+ "modified": "2024-03-28 14:58:42.225243",
  "modified_by": "Administrator",
  "module": "Payment Gateways",
  "name": "GoCardless Settings",
