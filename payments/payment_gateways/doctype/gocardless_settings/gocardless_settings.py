@@ -52,6 +52,7 @@ class GoCardlessSettings(Document):
 			"payer_name": customer_data.customer_name,
 			"order_id": data.name,
 			"currency": data.currency,
+			"charge_date": data.transaction_date or frappe.utils.nowdate(),
 		}
 
 		valid_mandate = self.check_mandate_validity(data)
@@ -133,6 +134,7 @@ class GoCardlessSettings(Document):
 			payment = self.client.payments.create(
 				params={
 					"amount": cint(reference_doc.grand_total * 100),
+					"charge_date": self.data.get("charge_date"),
 					"currency": reference_doc.currency,
 					"links": {"mandate": self.data.get("mandate")},
 					"metadata": {
