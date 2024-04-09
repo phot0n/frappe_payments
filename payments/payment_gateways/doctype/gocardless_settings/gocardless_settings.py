@@ -55,10 +55,10 @@ class GoCardlessSettings(Document):
 			"charge_date": data.transaction_date or frappe.utils.nowdate(),
 		}
 
-		valid_mandate = self.check_mandate_validity(data)
+		valid_mandate, next_possible_charge_date = self.check_mandate_validity(data)
 		if valid_mandate is not None:
 			data.update(valid_mandate)
-
+			data["charge_date"] = max(data.get("charge_date"), next_possible_charge_date)
 			self.create_payment_request(data)
 			return False
 		else:
@@ -79,11 +79,11 @@ class GoCardlessSettings(Document):
 				or mandate.status == "submitted"
 				or mandate.status == "active"
 			):
-				return {"mandate": registered_mandate}
+				return {"mandate": registered_mandate}, mandate.next_possible_charge_date
 			else:
-				return None
+				return None, None
 		else:
-			return None
+			return None, None
 
 	def get_environment(self):
 		if self.use_sandbox:
