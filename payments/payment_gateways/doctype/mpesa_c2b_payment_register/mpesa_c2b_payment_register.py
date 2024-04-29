@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from payments.payment_gateways.api.payment_entry import create_payment_entry
 # from posawesome.posawesome.api.payment_entry import create_payment_entry
 
 
@@ -44,17 +45,18 @@ class MpesaC2BPaymentRegister(Document):
             frappe.throw(_("Mode of Payment is required"))
         self.payment_entry = self.create_payment_entry()
 
-    # def create_payment_entry(self):
-    #     payment_entry = create_payment_entry(
-    #         self.company,
-    #         self.customer,
-    #         self.transamount,
-    #         self.currency,
-    #         self.mode_of_payment,
-    #         self.posting_date,
-    #         self.transid,
-    #         self.posting_date,
-    #         None,
-    #         self.submit_payment,
-    #     )
-    #     return payment_entry.name
+    def create_payment_entry(self):
+        payment_entry = create_payment_entry(
+            self.company,
+            self.customer,
+            self.transamount,
+            self.currency,
+            self.mode_of_payment,
+            self.posting_date,
+            self.transid,
+            self.posting_date,
+            None,
+            self.submit_payment,
+        )
+        return payment_entry.name
+    
