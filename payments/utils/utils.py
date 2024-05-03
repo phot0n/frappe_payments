@@ -1,11 +1,25 @@
 import click
 import frappe
+
 from frappe import _
 from contextlib import contextmanager
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from payments.types import PSLName
 
-def get_payment_gateway_controller(payment_gateway):
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from payments.controllers import PaymentController
+	from payments.payments.doctype.payment_session_log.payment_session_log import (
+		PaymentSessionLog,
+	)
+
+# Key used to identify the integration request on the frappe/erpnext side across its lifecycle
+PAYMENT_SESSION_REF_KEY = "s"
+
+
+def get_payment_controller(payment_gateway: str) -> "PaymentController":
 	"""Return payment gateway controller"""
 	gateway = frappe.get_doc("Payment Gateway", payment_gateway)
 	if gateway.gateway_controller is None:
@@ -24,7 +38,7 @@ def get_payment_gateway_controller(payment_gateway):
 def get_checkout_url(**kwargs):
 	try:
 		if kwargs.get("payment_gateway"):
-			doc = frappe.get_doc("{} Settings".format(kwargs.get("payment_gateway")))
+			doc = get_payment_controller(kwargs.get("payment_gateway"))
 			return doc.get_payment_url(**kwargs)
 		else:
 			raise Exception
@@ -149,7 +163,18 @@ def make_custom_fields():
 					"reqd": 1,
 					"insert_after": "disabled",
 				}
-			]
+			],
+			"Payment Request": [
+				{
+					"fieldname": "payment_session_log",
+					"fieldtype": "Link",
+					"in_list_view": 1,
+					"label": "Payment Session Log",
+					"options": "Payment Session Log",
+					"read_only": 1,
+					"insert_after": "payment_url",
+				}
+			],
 		}
 
 		create_custom_fields(custom_fields)
@@ -174,6 +199,8 @@ def delete_custom_fields():
 
 		for fieldname in fieldnames:
 			frappe.db.delete("Custom Field", {"name": "Web Form-" + fieldname})
+
+		frappe.db.delete("Custom Field", {"name": "Payment Request-payment_session_log"})
 
 		frappe.clear_cache(doctype="Web Form")
 

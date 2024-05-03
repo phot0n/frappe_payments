@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "autoname": "field:label",
+ "creation": "2022-01-24 21:09:47.229371",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gateway_settings",
+  "gateway_controller",
+  "column_break_mjuo",
+  "label",
+  "enabled",
+  "button_configuration_section",
+  "column_break_zwhf",
+  "icon",
+  "gateway_css",
+  "gateway_js",
+  "gateway_wrapper",
+  "extra_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "gateway_settings",
+   "fieldtype": "Link",
+   "label": "Gateway Settings",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gateway_controller",
+   "fieldtype": "Dynamic Link",
+   "label": "Gateway Controller",
+   "options": "gateway_settings",
+   "reqd": 1
+  },
+  {
+   "default": "<link rel=\"stylesheet\" href=\"{{ doc.static_assets_url }}/js/krypton-client/V4.0/ext/neon-reset.min.css\">\n<style>\n  .kr-smart-button {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  .kr-form-error {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  .kr-form-error>span {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  #payment-form {\n    margin-top: 40px;\n  }\n\n  #header-img {\n    margin-bottom: 40px;\n    margin: auto;\n    display: block;\n  }\n</style>",
+   "fieldname": "gateway_css",
+   "fieldtype": "Code",
+   "ignore_xss_filter": 1,
+   "label": "Gateway CSS",
+   "mandatory_depends_on": "eval: doc.enabled",
+   "options": "HTML"
+  },
+  {
+   "default": "<script src=\"{{ doc.static_assets_url }}/js/krypton-client/V4.0/stable/kr-payment-form.min.js\"\n  kr-public-key=\"{{ doc.kr_public_key }}\"></script>\n<script src=\"{{ doc.static_assets_url }}/js/krypton-client/V4.0/ext/neon.js\"></script>",
+   "fieldname": "gateway_js",
+   "fieldtype": "Code",
+   "ignore_xss_filter": 1,
+   "label": "Gateway JS",
+   "mandatory_depends_on": "eval: doc.enabled",
+   "options": "HTML"
+  },
+  {
+   "default": "<div class=\"wrapper\">\n  <div class=\"checkout container\">\n    <div id=\"payment-form\" class=\"container\">\n      <!-- payment form -->\n      <div class=\"kr-smart-button\"></div>\n      <div class=\"kr-smart-button\"></div>\n      <div class=\"kr-smart-form\" kr-form-token=\"{{ payload.formToken }}\"></div>\n      <!-- error zone -->\n      <div class=\"kr-form-error\"></div>\n    </div>\n  </div>\n</div>",
+   "fieldname": "gateway_wrapper",
+   "fieldtype": "Code",
+   "ignore_xss_filter": 1,
+   "label": "Gateway Wrapper",
+   "mandatory_depends_on": "eval: doc.enabled",
+   "options": "HTML"
+  },
+  {
+   "default": "<div class=\"wrapper\">\n  <div class=\"checkout container\">\n    <div id=\"payment-form\" class=\"container\">\n      <img id=\"header-img\" class=\"center\" src=\"{{ header_img }}\">\n\n      <!-- payment form -->\n      <div class=\"kr-smart-button\"></div>\n      <div class=\"kr-smart-button\"></div>\n      <div class=\"kr-smart-form\"></div>\n      <!-- error zone -->\n      <div class=\"kr-form-error\"></div>\n    </div>\n  </div>\n</div>\n\n<style>\n  .kr-smart-button {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  .kr-form-error {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  .kr-form-error&gt;span {\n    margin-left: auto;\n    margin-right: auto;\n  }\n\n  #payment-form {\n    margin-top: 40px;\n  }\n\n  #header-img {\n    margin-bottom: 40px;\n    margin: auto;\n    display: block;\n  }\n</style>\n",
+   "fieldname": "column_break_zwhf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The label to show on the payment button on checkout pages",
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_mjuo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "description": "The svg icon to the left of the payment button label",
+   "fieldname": "icon",
+   "fieldtype": "Attach Image",
+   "label": "Icon"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.enabled",
+   "description": "The code fields of this section are HTML snippets templated via jinja.<br>\n<pre>{\n  \"doc\":     &lt;Instance of PaymentController&gt;,\n  \"payload\": &lt;Instance of RemoteServerInitiationPayload&gt;,\n}</pre>\n<span class=\"text-muted\"><small>This jinja context is specific to the gateway.</small></span>",
+   "fieldname": "button_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Button Configuration"
+  },
+  {
+   "default": "{}",
+   "description": "Add button-specific extra payload which can be used by the gateway implementation.",
+   "fieldname": "extra_payload",
+   "fieldtype": "Code",
+   "label": "Extra Payload",
+   "options": "JSON"
+  }
+ ],
+ "image_field": "icon",
+ "links": [],
+ "modified": "2024-05-04 05:08:57.275983",
+ "modified_by": "Administrator",
+ "module": "Payments",
+ "name": "Payment Button",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "select": 1,
+   "share": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

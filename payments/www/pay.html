@@ -1,0 +1,73 @@
+{% extends "templates/base.html" %}
+
+
+{% block title %}{{ title or _("Payment") }}{% endblock %}
+{% block navbar %}{% endblock %}
+
+{%- block head_include %}
+<style>	{% include "templates/styles/card_style.css" %}</style>
+{% if render_widget %}
+	{{ gateway_css }}
+{% endif %}
+{% endblock -%}
+
+{%- block content -%}
+<div class='page-card'>
+	<h5 class='page-card-head text-center'>
+		<span id="refdoc-indicator" class='indicator {{ indicator_color or "blue" }}'>
+			{{ tx_data.reference_docname }}</span>
+	</h5>
+	<div class="page-card-body">
+		{% block reference_body %}
+			{% set payer = tx_data.payer_contact %}
+			<p class="text-center">
+				{{ _("Amount") }}:&emsp;{{ frappe.utils.fmt_money(tx_data.amount, currency=tx_data.currency) }}</br>
+				{{ _("Document") }}:&emsp;{{ tx_data.reference_doctype }}</br>
+				{{ _("Customer") }}:&emsp;{{ payer.get("full_name") }}</br>
+			</p>
+		{% endblock %}
+		<hr/>
+		<p class="text-center">
+		<span id="status-wrapper" {% if not status or False %} style='display: none;'{% endif %}>
+		  {{ _("Status") }}: <span id="status"
+		  class='indicator-pill no-indicator-dot whitespace-nowrap {{ indicator_color or "blue" }}'
+		>{{ status or "" }}</span></span>
+		<span id="message-wrapper" style='display: none;'><br/>
+		  {{ _("Note") }}: <span id="message"></span></span>
+		</p>
+		{% if render_widget %}
+			<a id="action"
+				class='btn btn-primary btn-sm btn-block btn-pay'
+				style='display: none;'
+			></a>
+			{{ gateway_wrapper }}
+		{% endif %}
+		{% if render_buttons %}
+			<div id="select-button-errors" class='text-danger text-center small my-3' style='display: none;'></div>
+			{% set primary_button = payment_buttons[0] %}
+			{% set secondary_buttons = payment_buttons[1:] %}
+			<div>
+				<div><button id="primary-button" data-button="{{ primary_button[1] }}" autofocus
+						class='btn btn-primary btn-sm btn-block btn-pay'>{{ primary_button[0] }}&ensp;{{ primary_button[2] }}</button></div>
+				{% for secondary_button in secondary_buttons %}
+				<div><button  data-button="{{ secondary_button[1] }}"
+						class='btn btn-sm btn-block btn-pay'>{{ secondary_button[0] }}&ensp;{{ secondary_button[2] }}</button></div>
+				{% endfor %}
+			</div>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}
+
+{% block base_scripts %}
+{% if render_widget %}
+	{{ gateway_js}}
+{% endif %}
+
+<script>
+	frappe.boot = {{boot}}
+</script>
+{{ include_script('website-core.bundle.js') }}
+{% endblock %}
+
+{% set web_include_js=[] %}
