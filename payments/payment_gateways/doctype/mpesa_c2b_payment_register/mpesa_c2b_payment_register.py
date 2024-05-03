@@ -5,8 +5,6 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from payments.payment_gateways.api.payment_entry import create_payment_entry
-# from posawesome.posawesome.api.payment_entry import create_payment_entry
-
 
 class MpesaC2BPaymentRegister(Document):
     def before_insert(self):

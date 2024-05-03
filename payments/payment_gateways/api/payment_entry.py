@@ -9,9 +9,8 @@ from erpnext.accounts.doctype.journal_entry.journal_entry import (
 )
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_account
-from payments.payment_gateways.api.m_pesa import submit_mpesa_payment
+from payments.payment_gateways.api.m_pesa_api import submit_mpesa_payment
 from erpnext.accounts.utils import QueryPaymentLedger, get_outstanding_invoices as _get_outstanding_invoices
-
 
 def create_payment_entry(
     company,
@@ -25,6 +24,24 @@ def create_payment_entry(
     cost_center=None,
     submit=0,
 ):
+    """
+    Create a payment entry for a given customer and company.
+
+    Args:
+        company (str): Company for which the payment entry is being created.
+        customer (str): Customer for whom the payment entry is being created.
+        amount (float): Amount of the payment.
+        currency (str): Currency of the payment.
+        mode_of_payment (str): Mode of payment for the transaction.
+        reference_date (str, optional): Reference date for the payment entry. Defaults to None.
+        reference_no (str, optional): Reference number for the payment entry. Defaults to None.
+        posting_date (str, optional): Posting date for the payment entry. Defaults to None.
+        cost_center (str, optional): Cost center for the payment entry. Defaults to None.
+        submit (int, optional): Whether to submit the payment entry immediately. Defaults to 0.
+
+    Returns:
+        PaymentEntry: Newly created payment entry document.
+    """
     # TODO : need to have a better way to handle currency
     date = nowdate() if not posting_date else posting_date
     party_type = "Customer"
@@ -84,6 +101,17 @@ def create_payment_entry(
 
 
 def get_bank_cash_account(company, mode_of_payment, bank_account=None):
+    """
+    Retrieve the default bank or cash account based on the company and mode of payment.
+
+    Args:
+        company (str): Company for which the account is being retrieved.
+        mode_of_payment (str): Mode of payment for the transaction.
+        bank_account (str, optional): Specific bank account to retrieve. Defaults to None.
+
+    Returns:
+        BankAccount: Default bank or cash account.
+    """
     bank = get_default_bank_cash_account(
         company, "Bank", mode_of_payment=mode_of_payment, account=bank_account
     )
@@ -104,8 +132,25 @@ def set_paid_amount_and_received_amount(
     bank_amount,
     conversion_rate,
 ):
+    """
+    Set the paid amount and received amount based on currency and conversion rate.
+
+    Args:
+        party_account_currency (str): Currency of the party account.
+        bank (BankAccount): Bank account used for the transaction.
+        outstanding_amount (float): Outstanding amount to be paid/received.
+        payment_type (str): Type of payment (Receive/Pay).
+        bank_amount (float): Amount in the bank account currency (if available).
+        conversion_rate (float): Conversion rate between currencies.
+
+    Returns:
+        float: Paid amount.
+        float: Received amount.
+    """
     paid_amount = received_amount = 0
-    if party_account_currency == bank.account_currency:
+    # print(str(bank["account_currency"]))
+    #made changes on this line
+    if party_account_currency == bank["account_currency"]:
         paid_amount = received_amount = abs(outstanding_amount)
     elif payment_type == "Receive":
         paid_amount = abs(outstanding_amount)
@@ -127,8 +172,20 @@ def set_paid_amount_and_received_amount(
 
 @frappe.whitelist()
 def get_outstanding_invoices(company, currency, customer=None, pos_profile_name=None):
+    """
+    Retrieve outstanding invoices for a given company and currency.
+
+    Args:
+        company (str): Company for which invoices are being retrieved.
+        currency (str): Currency of the invoices.
+        customer (str, optional): Customer for whom invoices are being retrieved. Defaults to None.
+        pos_profile_name (str, optional): POS profile name for filtering invoices. Defaults to None.
+
+    Returns:
+        list: List of outstanding invoices.
+    """
     if customer:
-        precision = frappe.get_precision("Sales Invoice", "outstanding_amount") or 2
+        precision = frappe.get_precision("POS Invoice", "outstanding_amount") or 2
         outstanding_invoices = _get_outstanding_invoices(
             party_type="Customer",
             party=customer,
@@ -139,7 +196,7 @@ def get_outstanding_invoices(company, currency, customer=None, pos_profile_name=
         for invoice in outstanding_invoices:
             if invoice.get("currency") == currency:
                 if pos_profile_name and frappe.get_cached_value(
-                    "Sales Invoice", invoice.get("voucher_no"), "pos_profile"
+                    "POS Invoice", invoice.get("voucher_no"), "pos_profile"
                 ) != pos_profile_name:
                     continue
                 outstanding_amount = invoice.outstanding_amount
@@ -171,7 +228,7 @@ def get_outstanding_invoices(company, currency, customer=None, pos_profile_name=
         if pos_profile_name:
             filters.update({"pos_profile": pos_profile_name})
         invoices = frappe.get_all(
-            "Sales Invoice",
+            "POS Invoice",
             filters=filters,
             fields=[
                 "name",
@@ -191,6 +248,18 @@ def get_outstanding_invoices(company, currency, customer=None, pos_profile_name=
 
 @frappe.whitelist()
 def get_unallocated_payments(customer, company, currency, mode_of_payment=None):
+    """
+    Retrieve unallocated payments for a given customer, company, and currency.
+
+    Args:
+        customer (str): Customer for whom payments are being retrieved.
+        company (str): Company for which payments are being retrieved.
+        currency (str): Currency of the payments.
+        mode_of_payment (str, optional): Mode of payment for filtering payments. Defaults to None.
+
+    Returns:
+        list: List of unallocated payments.
+    """
     filters = {
         "party": customer,
         "company": company,
@@ -222,10 +291,21 @@ def get_unallocated_payments(customer, company, currency, mode_of_payment=None):
 
 @frappe.whitelist()
 def process_pos_payment(payload):
-    data = json.loads(payload)
+    """
+    Process payments for a point of sale (POS) transaction.
+
+    Args:
+        payload (str): JSON payload containing payment data.
+
+    Returns:
+        dict: Dictionary containing details of the processed payments.
+    """
+    # data = json.loads(payload)
+    data=payload
+    print(data)
     data = frappe._dict(data)
-    if not data.pos_profile.get("posa_use_pos_awesome_payments"):
-        frappe.throw(_("POS Awesome Payments is not enabled for this POS Profile"))
+    if not data.pos_profile.get("custom_use_pos_payments"):
+        frappe.throw(_("POS is not enabled for this POS Profile"))
 
     # validate data
     if not data.customer:
@@ -243,10 +323,10 @@ def process_pos_payment(payload):
     currency = data.currency
     customer = data.customer
     pos_opening_shift_name = data.pos_opening_shift_name
-    allow_make_new_payments = data.pos_profile.get("posa_allow_make_new_payments")
-    allow_reconcile_payments = data.pos_profile.get("posa_allow_reconcile_payments")
+    allow_make_new_payments = data.pos_profile.get("custom_allow_make_new_payments")
+    allow_reconcile_payments = data.pos_profile.get("custom_allow_reconcile_payments")
     allow_mpesa_reconcile_payments = data.pos_profile.get(
-        "posa_allow_mpesa_reconcile_payments"
+        "custom_allow_mpesa_reconcile_payments"
     )
     today = nowdate()
 
@@ -336,7 +416,7 @@ def process_pos_payment(payload):
             for invoice in all_invoices_list:
                 args["invoices"].append(
                     {
-                        "invoice_type": "Sales Invoice",
+                        "invoice_type": "POS Invoice",
                         "invoice_number": invoice.get("name"),
                         "invoice_date": invoice.get("posting_date"),
                         "amount": invoice.get("grand_total"),
@@ -418,6 +498,16 @@ def process_pos_payment(payload):
 
 @frappe.whitelist()
 def get_available_pos_profiles(company, currency):
+    """
+    Retrieve available POS profiles for a given company and currency.
+
+    Args:
+        company (str): Company for which POS profiles are being retrieved.
+        currency (str): Currency of the POS profiles.
+
+    Returns:
+        list: List of available POS profiles.
+    """
     pos_profiles_list = frappe.get_list(
         "POS Profile",
         filters={"disabled": 0, "company": company, "currency": currency},

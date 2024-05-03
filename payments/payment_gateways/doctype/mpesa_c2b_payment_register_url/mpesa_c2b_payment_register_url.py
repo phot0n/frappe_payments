@@ -29,19 +29,19 @@ class MpesaC2BPaymentRegisterURL(Document):
             base_url=base_url,
         )
 
-        site_url = get_request_site_address(True)
+        #site_url = get_request_site_address(True)
         validation_url = (
             #site_url + "/api/method/payments.payment_gateways.doctype.mpesa_c2b_payment_register_url.mpesa_api.validation"
-            "https://6474-196-216-86-78.ngrok-free.app"+ "/api/method/payments.payment_gateways.api.m_pesa_api.validation"
+            "https://807f-196-216-86-77.ngrok-free.app"+ "/api/method/payments.payment_gateways.api.m_pesa_api.validation"
         )
         confirmation_url = (
             # site_url + "/api/method/payments.payment_gateways.doctype.mpesa_c2b_payment_register_url.mpesa_api.confirmation"
-            "https://6474-196-216-86-78.ngrok-free.app"+ "/api/method/payments.payment_gateways.m_pesa_api.confirmation"
+            "https://807f-196-216-86-77.ngrok-free.app"+ "/api/method/payments.payment_gateways.m_pesa_api.confirmation"
         )
         register_url = base_url + "/mpesa/c2b/v2/registerurl"
 
         payload = {
-            "ShortCode": business_shortcode,
+            "ShortCode": '8925326',
             "ResponseType": "Completed",
             "ConfirmationURL": confirmation_url,
             "ValidationURL": validation_url,
