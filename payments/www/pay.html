@@ -35,12 +35,22 @@
 		<span id="message-wrapper" style='display: none;'><br/>
 		  {{ _("Note") }}: <span id="message"></span></span>
 		</p>
+		{% if logo %}
+		<img
+			class="app-logo mx-auto d-block"
+			src="{{ logo }}"
+			style="width: 150px"
+			alt="{{ _("Brand Logo") }}"
+		>
+		{% endif %}
 		{% if render_widget %}
+		<div class="mt-4">
 			<a id="action"
 				class='btn btn-primary btn-sm btn-block btn-pay'
 				style='display: none;'
 			></a>
 			{{ gateway_wrapper }}
+		</div>
 		{% endif %}
 		{% if render_buttons %}
 			<div id="select-button-errors" class='text-danger text-center small my-3' style='display: none;'></div>

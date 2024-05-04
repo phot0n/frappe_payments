@@ -53,6 +53,7 @@ def get_context(context):
 	if not psl.button and psl.status not in ["Paid", "Authorized", "Processing", "Error"]:
 		context.render_widget = False
 		context.render_buttons = True
+		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 		filters = {"enabled": True}
 
 		# gateway was preselected; e.g. on the backend
@@ -80,6 +81,7 @@ def get_context(context):
 		context.render_widget = False
 		context.render_buttons = False
 		context.status = psl.status
+		context.logo = None
 		match psl.status:
 			case "Paid":
 				context.indicator_color = "green"
@@ -95,6 +97,7 @@ def get_context(context):
 	else:
 		context.render_widget = True
 		context.render_buttons = False
+		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 
 		tx_update = {}  # TODO: implement that the user may change some values
 		proceeded: Proceeded = PaymentController.proceed(psl.name, tx_update)
