@@ -147,6 +147,20 @@ class PaymentController(Document):
 		return get_url(f"./pay?{urlencode(params)}")
 
 	@staticmethod
+	def pre_data_capture_hook(psl_name: PSLName) -> dict:
+		"""Call this before presenting the user with a form to capture additional data.
+
+		Implementation is optional, but can be used to acquire any additonal data from the remote
+		gateway that should be present already during data capture.
+		"""
+
+		psl: PaymentSessionLog = frappe.get_cached_doc("Payment Session Log", psl_name)
+		self: "PaymentController" = psl.get_controller()
+		data = self._pre_data_capture_hook()
+		psl.update_gateway_specific_state(data, "Data Capture")
+		return data
+
+	@staticmethod
 	def proceed(psl_name: PSLName, updated_tx_data: TxData | None) -> Proceeded:
 		"""Call this when the user agreed to proceed with the payment to initiate the capture with
 		the remote payment gateway.
@@ -250,6 +264,7 @@ class PaymentController(Document):
 				indicator_color="yellow",
 			)
 			raise frappe.Redirect
+
 		except Exception as e:
 			error = psl.log_error(title="Unknown Initialization Failure")
 			frappe.redirect_to_message(
@@ -396,7 +411,7 @@ class PaymentController(Document):
 
 	@staticmethod
 	def process_response(psl_name: PSLName, response: GatewayProcessingResponse) -> Processed:
-		"""Call this from the controlling business logic; either backend or frontens.
+		"""Call this from the controlling business logic; either backend or frontend.
 
 		It will recover the correct controller and dispatch the correct processing based on data that is at this
 		point already stored in the integration log
@@ -504,6 +519,15 @@ class PaymentController(Document):
 		For example in order to fix rounding or decimal accuracy.
 		"""
 		return tx_data
+
+	def _pre_data_capture_hook(self) -> dict:
+		"""Optional: Implement additional server side control flow prior to data capture.
+		For example in order to fetch additional data from the gateway that must be already present
+		during the data capture.
+
+		This is NOT used in Buttons with the Third Party Widget implementation variant.
+		"""
+		return {}
 
 	def _should_have_mandate(self) -> bool:
 		"""Optional: Define here, if the TxData store in self.state.tx_data should have a mandate.

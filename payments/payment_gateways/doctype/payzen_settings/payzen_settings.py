@@ -85,6 +85,8 @@ gateway_wrapper = """<div class="wrapper d-flex justify-content-center">
     </div>
 </div>"""
 
+data_capture = "<!-- not yet implemented -->"
+
 
 class PayzenSettings(PaymentController):
 	# begin: auto-generated types
@@ -139,6 +141,7 @@ class PayzenSettings(PaymentController):
 		gateway_css=gateway_css,
 		gateway_js=gateway_js,
 		gateway_wrapper=gateway_wrapper,
+		data_capture=data_capture,
 	)
 
 	# source: https://github.com/lyra/flask-embedded-form-examples/blob/master/.env.example

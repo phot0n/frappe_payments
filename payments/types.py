@@ -32,18 +32,23 @@ class SessionStates:
 
 @dataclass
 class FrontendDefaults:
-	"""Define gateway frontend defaults for css, js and the wrapper components.
+	"""Define gateway widget frontend defaults for css, js and the wrapper components
+	or a data capture form.
 
-	All three are html snippets and jinja templates rendered against this gateway's
+	All four are html snippets and jinja templates rendered against this gateway's
 	PaymentController instance and its RemoteServerInitiationPayload.
 
 	These are loaded into the Payment Button document and give users a starting point
-	to customize a gateway's payment button(s)
+	to customize payment button(s).
+
+	If the button implements a third party widget, then gateway_* are rendered into the checkout.
+	If the button implements first party data capture, then data_capture is rendered.
 	"""
 
 	gateway_css: str
 	gateway_js: str
 	gateway_wrapper: str
+	data_capture: str
 
 
 class RemoteServerInitiationPayload(dict):

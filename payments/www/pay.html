@@ -43,6 +43,15 @@
 			alt="{{ _("Brand Logo") }}"
 		>
 		{% endif %}
+		{% if render_capture %}
+		<form class="form-data-capture mt-10" role="form">
+				{{ data_capture }}
+				<div class="page-card-actions">
+				    <button id="action-data-captured" class="btn btn-sm btn-primary btn-block"
+				        type="submit">{{ _("Pay with") + " " + button_name }}</button>
+				</div>
+		</form>
+		{% endif %}
 		{% if render_widget %}
 		<div class="mt-4">
 			<a id="action"

@@ -5,7 +5,8 @@ import frappe
 import json
 from frappe import _
 from frappe.model.document import Document
-from payments.types import RemoteServerInitiationPayload
+from payments.types import RemoteServerInitiationPayload, TxData
+from payments.payments.doctype.payment_session_log.payment_session_log import PSLState
 
 Css = str
 Js = str
@@ -21,6 +22,7 @@ class PaymentButton(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		data_capture: DF.Code | None
 		enabled: DF.Check
 		extra_payload: DF.Code | None
 		gateway_controller: DF.DynamicLink
@@ -29,6 +31,7 @@ class PaymentButton(Document):
 		gateway_settings: DF.Link
 		gateway_wrapper: DF.Code | None
 		icon: DF.AttachImage | None
+		implementation_variant: DF.Literal["Third Party Widget", "Data Capture"]
 		label: DF.Data
 	# end: auto-generated types
 
@@ -36,7 +39,7 @@ class PaymentButton(Document):
 	#  - imeplement them for your controller
 	#  - need to be fully rendered with
 	# ---------------------------------------
-	def get_assets(self, payload: RemoteServerInitiationPayload) -> (Css, Js, Wrapper):
+	def get_widget_assets(self, payload: RemoteServerInitiationPayload) -> (Css, Js, Wrapper):
 		"""Get the fully rendered frontend assets for this button."""
 		context = {
 			"doc": frappe.get_cached_doc(self.gateway_settings, self.gateway_controller),
@@ -46,6 +49,25 @@ class PaymentButton(Document):
 		js = frappe.render_template(self.gateway_js, context)
 		wrapper = frappe.render_template(self.gateway_wrapper, context)
 		return css, js, wrapper
+
+	def get_data_capture_assets(self, state: PSLState) -> Wrapper:
+		"""Get the fully rendered data capture form.
+
+		The rendering context is updated with `state`.
+		"""
+		context = {
+			"doc": frappe.get_cached_doc(self.gateway_settings, self.gateway_controller),
+			"extra": frappe._dict(json.loads(self.extra_payload)),
+		}
+		context.update(state)
+		from pprint import pprint
+
+		pprint(context)
+		return frappe.render_template(self.data_capture, context)
+
+	@property
+	def requires_data_catpure(self):
+		return self.implementation_variant == "Data Capture"
 
 	def validate(self):
 		if self.extra_payload:

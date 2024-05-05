@@ -50,9 +50,11 @@ def get_context(context):
 	state = psl.load_state()
 	context.tx_data: TxData = state.tx_data
 
+	# First Pass: chose payment button
 	if not psl.button and psl.status not in ["Paid", "Authorized", "Processing", "Error"]:
 		context.render_widget = False
 		context.render_buttons = True
+		context.render_capture = False
 		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 		filters = {"enabled": True}
 
@@ -75,13 +77,14 @@ def get_context(context):
 			)
 		]
 
-	# only when button has already been selected
+	# Thirds Pass: represent status if eligible
 	# keep in sync with payment_controller.py
 	elif psl.status in ["Paid", "Authorized", "Processing", "Error", "Error - RefDoc"]:
 		context.render_widget = False
 		context.render_buttons = False
+		context.render_capture = False
 		context.status = psl.status
-		context.logo = None
+		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 		match psl.status:
 			case "Paid":
 				context.indicator_color = "green"
@@ -94,18 +97,32 @@ def get_context(context):
 			case "Error - RefDoc":
 				context.indicator_color = "red"
 
+	# Second Pass (Data Capture): capture additonal data if the button requires it
+	elif psl.requires_data_capture:
+		context.render_widget = False
+		context.render_buttons = False
+		context.render_capture = True
+		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
+
+		proceeded: Proceeded = PaymentController.pre_data_capture_hook(psl.name)
+		# Display
+		button: PaymentButton = psl.get_button()
+		context.data_capture = button.get_data_capture_assets(state)
+		context.button_name = psl.button
+
+	# Second Pass (Third Party Widget): let the third party widget manage data capture and flow
 	else:
 		context.render_widget = True
 		context.render_buttons = False
+		context.render_capture = False
 		context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 
-		tx_update = {}  # TODO: implement that the user may change some values
-		proceeded: Proceeded = PaymentController.proceed(psl.name, tx_update)
+		proceeded: Proceeded = PaymentController.proceed(psl.name)
 
 		# Display
 		payload: RemoteServerInitiationPayload = proceeded.payload
 		button: PaymentButton = psl.get_button()
-		css, js, wrapper = button.get_assets(payload)
+		css, js, wrapper = button.get_widget_assets(payload)
 		context.gateway_css = css
 		context.gateway_js = js
 		context.gateway_wrapper = wrapper

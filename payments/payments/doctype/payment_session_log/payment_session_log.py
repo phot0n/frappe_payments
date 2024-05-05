@@ -18,6 +18,20 @@ if TYPE_CHECKING:
 	from payments.controllers import PaymentController
 	from payments.payments.doctype.payment_button.payment_button import PaymentButton
 
+import collections.abc
+
+
+def update(d, u):
+	for k, v in u.items():
+		if isinstance(v, collections.abc.Mapping):
+			d[k] = update(d.get(k, {}), v)
+		else:
+			d[k] = v
+	return d
+
+
+PSLState = dict
+
 
 class PaymentSessionLog(Document):
 	# begin: auto-generated types
@@ -33,19 +47,32 @@ class PaymentSessionLog(Document):
 		decline_reason: DF.Data | None
 		flow_type: DF.Data | None
 		gateway: DF.Data | None
+		gateway_specific_state: DF.Code | None
 		initiation_response_payload: DF.Code | None
 		mandate: DF.Data | None
 		processing_response_payload: DF.Code | None
+		requires_data_capture: DF.Check
 		status: DF.Data | None
 		title: DF.Data | None
 		tx_data: DF.Code | None
 	# end: auto-generated types
 	def update_tx_data(self, tx_data: TxData, status: str) -> None:
-		data = json.loads(self.tx_data)
-		data.update(tx_data)
+		d = json.loads(self.tx_data)
+		update(d, tx_data)
 		self.db_set(
 			{
-				"tx_data": frappe.as_json(data),
+				"tx_data": frappe.as_json(d),
+				"status": status,
+			},
+			commit=True,
+		)
+
+	def update_gateway_specific_state(self, data: dict, status: str) -> None:
+		d = json.loads(self.gateway_specific_state) if self.gateway_specific_state else {}
+		update(d, data)
+		self.db_set(
+			{
+				"gateway_specific_state": frappe.as_json(d),
 				"status": status,
 			},
 			commit=True,
@@ -73,10 +100,11 @@ class PaymentSessionLog(Document):
 			commit=True,
 		)
 
-	def load_state(self):
+	def load_state(self) -> PSLState:
 		return frappe._dict(
 			psl=frappe._dict(self.as_dict()),
 			tx_data=TxData(**json.loads(self.tx_data)),
+			gateway_data=json.loads(self.gateway_specific_state) if self.gateway_specific_state else {},
 		)
 
 	def get_controller(self) -> "PaymentController":
@@ -124,6 +152,7 @@ def select_button(pslName: str = None, buttonName: str = None) -> str:
 	psl.db_set(
 		{
 			"button": buttonName,
+			"requires_data_capture": btn.requires_data_catpure,
 			"gateway": json.dumps(
 				{
 					"gateway_settings": btn.gateway_settings,
