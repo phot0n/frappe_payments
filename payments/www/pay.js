@@ -57,7 +57,7 @@ $(document).on("payload-processed", function (e, r) {
 		$("#message-wrapper").toggle(true)
 	}
 	if (r.message.action) {
-		const cta = $("#action");
+		const cta = $("#action-processed");
 		cta.html(r.message.action.label)
 		cta.attr("href", r.message.action.href)
 		cta.toggle(true)
