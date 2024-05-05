@@ -2,6 +2,8 @@ import json
 
 from urllib.parse import urlencode
 
+from requests.exceptions import HTTPError
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -196,6 +198,7 @@ class PaymentController(Document):
 		self.state.mandate: PaymentMandate = self._get_mandate()
 
 		try:
+			frappe.flags.integration_request_doc = psl  # for linking error logs
 
 			if self._should_have_mandate() and not self.mandate:
 				self.state.mandate = self._create_mandate()
@@ -255,11 +258,26 @@ class PaymentController(Document):
 					payload=initiated.payload,
 				)
 
+		# some gateways don't return HTTP errors ...
 		except FailedToInitiateFlowError as e:
 			psl.set_initiation_payload(e.data, "Error")
+			error = psl.log_error(title=e.message)
 			frappe.redirect_to_message(
 				_("Payment Gateway Error"),
-				_("Please contact customer care mentioning: {0}").format(psl),
+				_("Please contact customer care mentioning: {0} and {1}").format(psl, error),
+				http_status_code=401,
+				indicator_color="yellow",
+			)
+			raise frappe.Redirect
+
+		# ... yet others do ...
+		except HTTPError as e:
+			data = frappe.flags.integration_request.json()
+			psl.set_initiation_payload(data, "Error")
+			error = frappe.get_last_doc("Error Log")
+			frappe.redirect_to_message(
+				_("Payment Gateway Error"),
+				_("Please contact customer care mentioning: {0} and {1}").format(psl, error),
 				http_status_code=401,
 				indicator_color="yellow",
 			)
