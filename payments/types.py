@@ -91,6 +91,8 @@ class TxData:
 	reference_docname: str
 	payer_contact: dict  # as: contact.as_dict()
 	payer_address: dict  # as: address.as_dict()
+	loyalty_points: list[str, float] | None  # for display purpose only
+	discount_amount: float | None  # for display purpose only
 	# TODO: tx data for subscriptions, pre-authorized, require-mandate and other flows
 
 
