@@ -17,8 +17,6 @@ from frappe.utils import get_url
 
 from payments.utils import PAYMENT_SESSION_REF_KEY
 
-from types import MappingProxyType
-
 from payments.exceptions import (
 	FailedToInitiateFlowError,
 	PayloadIntegrityError,
@@ -327,23 +325,6 @@ class PaymentController(Document):
 			"payload": response.payload,
 		}
 
-		try:
-			ref_doc.flags.payment_session = frappe._dict(
-				state=self.state, flags=MappingProxyType(self.flags), flowstates=self.flowstates
-			)
-			if res := ref_doc.run_method(
-				hookmethod,
-				self.state,
-				MappingProxyType(self.flags),
-				self.flowstates,
-			):
-				# type check the result value on user implementations
-				res["action"] = ActionAfterProcessed(**res.get("action", {})).__dict__
-				_res = _Processed(**res)
-				processed = Processed(**(ret | _res.__dict__))
-		except Exception:
-			raise RefDocHookProcessingError(f"{hookmethod} failed", psltype)
-
 		if self.flags.status_changed_to in self.flowstates.success:
 			psl.set_processing_payload(response, "Paid")
 			ret["indicator_color"] = "green"
@@ -390,6 +371,26 @@ class PaymentController(Document):
 				action=action,
 				**ret,
 			)
+
+		try:
+			ref_doc.flags.payment_session = frappe._dict(
+				state=self.state, flags=self.flags, flowstates=self.flowstates
+			)  # when run as server script: can only set flags
+			res = ref_doc.run_method(
+				hookmethod,
+				self.state,
+				self.flags,
+				self.flowstates,
+			)
+			# result from server script run
+			res = ref_doc.flags.payment_result or res
+			if res:
+				# type check the result value on user implementations
+				res["action"] = ActionAfterProcessed(**res.get("action", {})).__dict__
+				_res = _Processed(**res)
+				processed = Processed(**(ret | _res.__dict__))
+		except Exception:
+			raise RefDocHookProcessingError(f"{hookmethod} failed", psltype)
 
 		return processed
 
