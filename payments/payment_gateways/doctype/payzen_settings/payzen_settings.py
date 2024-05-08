@@ -24,6 +24,7 @@ from payments.types import (
 	GatewayProcessingResponse,
 	SessionStates,
 	FrontendDefaults,
+	Processed,
 )
 
 gateway_css = """<link rel="stylesheet" href="{{ doc.static_assets_url }}/js/krypton-client/V4.0/ext/neon-reset.min.css">
@@ -397,7 +398,7 @@ def notification(**kwargs):
 	tx1 = data["transactions"][0]
 	psl_name = tx1["metadata"]["psl"]
 
-	return PaymentController.process_response(
+	processed: Processed = PaymentController.process_response(
 		psl_name=psl_name,
 		response=GatewayProcessingResponse(
 			hash=kr_hash,
@@ -407,4 +408,7 @@ def notification(**kwargs):
 				"data": data,
 			},
 		),
-	).__dict__
+	)
+
+	if processed:
+		return processed.__dict__
