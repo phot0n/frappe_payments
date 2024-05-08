@@ -163,7 +163,7 @@ class PaymentController(Document):
 		return data
 
 	@staticmethod
-	def proceed(psl_name: PSLName, updated_tx_data: TxData | None) -> Proceeded:
+	def proceed(psl_name: PSLName, updated_tx_data: TxData = None) -> Proceeded:
 		"""Call this when the user agreed to proceed with the payment to initiate the capture with
 		the remote payment gateway.
 
