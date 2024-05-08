@@ -325,7 +325,10 @@ class PaymentController(Document):
 			"payload": response.payload,
 		}
 
+		changed = False
+
 		if self.flags.status_changed_to in self.flowstates.success:
+			changed = "Paid" != psl.status
 			psl.set_processing_payload(response, "Paid")
 			ret["indicator_color"] = "green"
 			processed = processed or Processed(
@@ -334,6 +337,7 @@ class PaymentController(Document):
 				**ret,
 			)
 		elif self.flags.status_changed_to in self.flowstates.pre_authorized:
+			changed = "Authorized" != psl.status
 			psl.set_processing_payload(response, "Authorized")
 			ret["indicator_color"] = "green"
 			processed = processed or Processed(
@@ -342,6 +346,7 @@ class PaymentController(Document):
 				**ret,
 			)
 		elif self.flags.status_changed_to in self.flowstates.processing:
+			changed = "Processing" != psl.status
 			psl.set_processing_payload(response, "Processing")
 			ret["indicator_color"] = "yellow"
 			processed = processed or Processed(
@@ -350,6 +355,7 @@ class PaymentController(Document):
 				**ret,
 			)
 		elif self.flags.status_changed_to in self.flowstates.declined:
+			changed = "Declined" != psl.status
 			psl.db_set("decline_reason", self._render_failure_message())
 			psl.set_processing_payload(response, "Declined")  # commits
 			ret["indicator_color"] = "red"
@@ -374,10 +380,11 @@ class PaymentController(Document):
 
 		try:
 			ref_doc.flags.payment_session = frappe._dict(
-				state=self.state, flags=self.flags, flowstates=self.flowstates
+				changed=changed, state=self.state, flags=self.flags, flowstates=self.flowstates
 			)  # when run as server script: can only set flags
 			res = ref_doc.run_method(
 				hookmethod,
+				changed,
 				self.state,
 				self.flags,
 				self.flowstates,
@@ -389,8 +396,8 @@ class PaymentController(Document):
 				res["action"] = ActionAfterProcessed(**res.get("action", {})).__dict__
 				_res = _Processed(**res)
 				processed = Processed(**(ret | _res.__dict__))
-		except Exception:
-			raise RefDocHookProcessingError(f"{hookmethod} failed", psltype)
+		except Exception as e:
+			raise RefDocHookProcessingError(psltype) from e
 
 		return processed
 
@@ -498,7 +505,7 @@ class PaymentController(Document):
 				raise frappe.Redirect
 
 		except RefDocHookProcessingError as e:
-			error = psl.log_error(f"Processing failure ({e.psltype} - refdoc hook)")
+			error = psl.log_error(f"Processing failure ({e.psltype} - refdoc hook)", e.__cause__)
 			psl.set_processing_payload(response, "Error - RefDoc")
 			if not mute:
 				frappe.redirect_to_message(

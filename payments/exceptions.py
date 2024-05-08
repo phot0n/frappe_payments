@@ -18,6 +18,5 @@ class PaymentControllerProcessingError(Exception):
 
 
 class RefDocHookProcessingError(Exception):
-	def __init__(self, message, psltype):
-		self.message = message
+	def __init__(self, psltype):
 		self.psltype = psltype
