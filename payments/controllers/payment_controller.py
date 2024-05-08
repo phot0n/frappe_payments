@@ -328,10 +328,14 @@ class PaymentController(Document):
 		}
 
 		try:
+			ref_doc.flags.payment_session = frappe._dict(
+				state=self.state, flags=MappingProxyType(self.flags), flowstates=self.flowstates
+			)
 			if res := ref_doc.run_method(
 				hookmethod,
 				self.state,
 				MappingProxyType(self.flags),
+				self.flowstates,
 			):
 				# type check the result value on user implementations
 				res["action"] = ActionAfterProcessed(**res.get("action", {})).__dict__
@@ -464,8 +468,8 @@ class PaymentController(Document):
 				msg = self._render_failure_message()
 				psl.db_set("failure_reason", msg, commit=True)
 				try:
-					status = self.flags.status_changed_to
-					ref_doc.run_method("on_payment_failed", status, msg)
+					ref_doc.flags.payment_failure_message = msg
+					ref_doc.run_method("on_payment_failed", msg)
 				except Exception:
 					psl.log_error("Setting failure message on ref doc failed")
 
