@@ -84,7 +84,7 @@ def get_balance(reference_docname):
 		domain_url=frappe.get_doc("Custom Payment Settings", gateway_controller).configure_domain()
 		details= users_pb2.request(username=frappe.session.user, domain=domain_url)
 		stub = users_pb2_grpc.userServiceStub(channel)
-		response = stub.GetBalance(details)
+		response = stub.AccountBalance(details)
 		if response.info.information=='200 OK':
 			return response.balance
 		

@@ -35,6 +35,8 @@ message response {
     string referalCode = 12;
     string forname = 13;
     string balanceType = 14;
+    string wssUrl = 15;
+    string originUrl = 16;
 }
 
 enum Status {
@@ -60,6 +62,15 @@ message Info {
 
 // UserS service rpc definitions
 service userService {
+    rpc SendVerificationCode(request) returns (response){}
+    rpc SendWhatsAppOTP(request) returns (response){}
+    rpc Login(request) returns (response){}
     rpc GetBalance(request) returns (response){}
+    rpc GetDomainForPackageID(request) returns (response){}
     rpc CreateAccount (request) returns (response){}
+    rpc AccountBalance (request) returns (response){}
+    rpc RegisterAccount (request) returns (response){}    
+    rpc GetAliasNumber (request) returns (response){}
+    rpc GetWebsocketUrl(request) returns (response);
+    rpc GetOrignUrl(request) returns (response);
 }
