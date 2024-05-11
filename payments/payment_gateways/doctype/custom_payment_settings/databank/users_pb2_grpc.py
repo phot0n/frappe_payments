@@ -20,6 +20,11 @@ class userServiceStub(object):
                 request_serializer=users__pb2.request.SerializeToString,
                 response_deserializer=users__pb2.response.FromString,
                 )
+        self.CreateAccount = channel.unary_unary(
+                '/users.userService/CreateAccount',
+                request_serializer=users__pb2.request.SerializeToString,
+                response_deserializer=users__pb2.response.FromString,
+                )
 
 
 class userServiceServicer(object):
@@ -32,11 +37,22 @@ class userServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CreateAccount(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_userServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetBalance': grpc.unary_unary_rpc_method_handler(
                     servicer.GetBalance,
+                    request_deserializer=users__pb2.request.FromString,
+                    response_serializer=users__pb2.response.SerializeToString,
+            ),
+            'CreateAccount': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateAccount,
                     request_deserializer=users__pb2.request.FromString,
                     response_serializer=users__pb2.response.SerializeToString,
             ),
@@ -63,6 +79,23 @@ class userService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/users.userService/GetBalance',
+            users__pb2.request.SerializeToString,
+            users__pb2.response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CreateAccount(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/users.userService/CreateAccount',
             users__pb2.request.SerializeToString,
             users__pb2.response.FromString,
             options, channel_credentials,

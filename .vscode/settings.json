@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./payments/payment_gateways/doctype/custom_payment_settings/databank"
+    ]
+}

@@ -52,10 +52,6 @@ def get_order_items(reqname):
 	order=frappe.get_doc('Sales Order',(frappe.get_value('Payment Request',reqname,['reference_name'])), as_dict=1)
 	return order.items
 	
-def get_balance():
-	pass
-
-
 @frappe.whitelist(allow_guest=True)
 def cancel_payment(data):
 	try:
@@ -83,10 +79,14 @@ def make_payment(data, reference_doctype, reference_docname):
 
 def get_balance(reference_docname):
 		gateway_controller = get_gateway_controller(reference_docname)
+		print(gateway_controller)
 		channel=frappe.get_doc("Custom Payment Settings", gateway_controller).configure_wallet()
 		domain_url=frappe.get_doc("Custom Payment Settings", gateway_controller).configure_domain()
 		details= users_pb2.request(username=frappe.session.user, domain=domain_url)
 		stub = users_pb2_grpc.userServiceStub(channel)
 		response = stub.GetBalance(details)
-		print(response)
-		return response.balance
+		if response.info.information=='200 OK':
+			return response.balance
+		
+		else:
+			frappe.throw(response.error.localizedDescription)

@@ -33,7 +33,8 @@ message response {
     Success success = 10;
     string alias = 11;
     string referalCode = 12;
-    string name = 13;
+    string forname = 13;
+    string balanceType = 14;
 }
 
 enum Status {
@@ -59,5 +60,6 @@ message Info {
 
 // UserS service rpc definitions
 service userService {
-    rpc GetBalance(request) returns (response);
+    rpc GetBalance(request) returns (response){}
+    rpc CreateAccount (request) returns (response){}
 }
