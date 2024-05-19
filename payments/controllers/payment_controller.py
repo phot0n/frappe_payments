@@ -473,9 +473,8 @@ class PaymentController(Document):
 		try:
 			processed = self._process_response(psl, response, ref_doc)
 			if self.flags.status_changed_to in self.flowstates.declined:
-				msg = self._render_failure_message()
-				psl.db_set("failure_reason", msg, commit=True)
 				try:
+					msg = self._render_failure_message()
 					ref_doc.flags.payment_failure_message = msg
 					ref_doc.run_method("on_payment_failed", msg)
 				except Exception:
