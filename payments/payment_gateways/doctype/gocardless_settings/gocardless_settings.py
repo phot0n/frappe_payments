@@ -147,35 +147,29 @@ class GoCardlessSettings(Document):
 				},
 			)
 
-			if (
-				payment.status == "pending_submission"
-				or payment.status == "pending_customer_approval"
-				or payment.status == "submitted"
-			):
-				self.integration_request.db_set("status", "Authorized", update_modified=False)
-				self.flags.status_changed_to = "Completed"
-				self.integration_request.db_set("output", payment.status, update_modified=False)
+			match payment.status:
+				case "pending_submission" | "pending_customer_approval" | "submitted":
+					self.integration_request.db_set("status", "Authorized", update_modified=False)
+					self.flags.status_changed_to = "Completed"
+					self.integration_request.db_set("output", payment.status, update_modified=False)
 
-			elif payment.status == "confirmed" or payment.status == "paid_out":
-				self.integration_request.db_set("status", "Completed", update_modified=False)
-				self.flags.status_changed_to = "Completed"
-				self.integration_request.db_set("output", payment.status, update_modified=False)
+				case "confirmed" | "paid_out":
+					self.integration_request.db_set("status", "Completed", update_modified=False)
+					self.flags.status_changed_to = "Completed"
+					self.integration_request.db_set("output", payment.status, update_modified=False)
 
-			elif (
-				payment.status == "cancelled"
-				or payment.status == "customer_approval_denied"
-				or payment.status == "charged_back"
-			):
-				self.integration_request.db_set("status", "Cancelled", update_modified=False)
-				frappe.log_error("Gocardless payment cancelled")
-				self.integration_request.db_set("error", payment.status, update_modified=False)
-			else:
-				self.integration_request.db_set("status", "Failed", update_modified=False)
-				frappe.log_error("Gocardless payment failed")
-				self.integration_request.db_set("error", payment.status, update_modified=False)
+				case "cancelled" | "customer_approval_denied" | "charged_back":
+					self.integration_request.db_set("status", "Cancelled", update_modified=False)
+					frappe.log_error("Gocardless payment cancelled")
+					self.integration_request.db_set("error", payment.status, update_modified=False)
+
+				case _:
+					self.integration_request.db_set("status", "Failed", update_modified=False)
+					frappe.log_error("Gocardless payment failed")
+					self.integration_request.db_set("error", payment.status, update_modified=False)
 
 		except Exception as e:
-			frappe.log_error("GoCardless Payment Error")
+			frappe.log_error("GoCardless Payment Error", e)
 
 		if self.flags.status_changed_to == "Completed":
 			status = "Completed"
