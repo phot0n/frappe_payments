@@ -329,7 +329,8 @@ class PaymentController(Document):
 
 		if self.flags.status_changed_to in self.flowstates.success:
 			changed = "Paid" != psl.status
-			psl.set_processing_payload(response, "Paid")
+			psl.db_set("decline_reason", None)
+			psl.set_processing_payload(response, "Paid")  # commits
 			ret["indicator_color"] = "green"
 			processed = processed or Processed(
 				message=_("{} succeeded").format(psltype.title()),
@@ -338,7 +339,8 @@ class PaymentController(Document):
 			)
 		elif self.flags.status_changed_to in self.flowstates.pre_authorized:
 			changed = "Authorized" != psl.status
-			psl.set_processing_payload(response, "Authorized")
+			psl.db_set("decline_reason", None)
+			psl.set_processing_payload(response, "Authorized")  # commits
 			ret["indicator_color"] = "green"
 			processed = processed or Processed(
 				message=_("{} authorized").format(psltype.title()),
@@ -347,7 +349,8 @@ class PaymentController(Document):
 			)
 		elif self.flags.status_changed_to in self.flowstates.processing:
 			changed = "Processing" != psl.status
-			psl.set_processing_payload(response, "Processing")
+			psl.db_set("decline_reason", None)
+			psl.set_processing_payload(response, "Processing")  # commits
 			ret["indicator_color"] = "yellow"
 			processed = processed or Processed(
 				message=_("{} awaiting further processing by the bank").format(psltype.title()),
@@ -356,7 +359,12 @@ class PaymentController(Document):
 			)
 		elif self.flags.status_changed_to in self.flowstates.declined:
 			changed = "Declined" != psl.status
-			psl.db_set("decline_reason", self._render_failure_message())
+			psl.db_set(
+				{
+					"decline_reason": self._render_failure_message(),
+					"button": None,  # reset the button for another chance
+				}
+			)
 			psl.set_processing_payload(response, "Declined")  # commits
 			ret["indicator_color"] = "red"
 			incoming_email = None
