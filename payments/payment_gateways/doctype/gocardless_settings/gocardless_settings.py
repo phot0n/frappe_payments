@@ -147,6 +147,8 @@ class GoCardlessSettings(Document):
 				},
 			)
 
+			self.integration_request.db_set("output", payment.api_response._response._content.decode())
+
 			match payment.status:
 				case "pending_submission" | "pending_customer_approval" | "submitted":
 					self.integration_request.db_set("status", "Authorized", update_modified=False)
@@ -169,7 +171,8 @@ class GoCardlessSettings(Document):
 					self.integration_request.db_set("error", payment.status, update_modified=False)
 
 		except Exception as e:
-			frappe.log_error("GoCardless Payment Error", e)
+			self.integration_request.db_set("error", str(e))
+			frappe.log_error("GoCardless Payment Error", str(e))
 
 		if self.flags.status_changed_to == "Completed":
 			status = "Completed"
