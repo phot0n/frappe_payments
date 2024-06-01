@@ -512,7 +512,7 @@ class PaymentController(Document):
 				raise frappe.Redirect
 
 		except RefDocHookProcessingError as e:
-			error = psl.log_error(f"Processing failure ({e.psltype} - refdoc hook)", e.__cause__)
+			error = psl.log_error(f"Processing failure ({e.psltype} - refdoc hook)")
 			psl.set_processing_payload(response, "Error - RefDoc")
 			if not mute:
 				frappe.redirect_to_message(
