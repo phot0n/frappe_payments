@@ -20,23 +20,28 @@
 	<div class="page-card-body">
 		{% block reference_body %}
 			{% set payer = tx_data.payer_contact -%}
-			{% if tx_data.discount_amount -%}
-				{% set total = tx_data.amount + tx_data.discount_amount -%}
+			{% if has_discount -%}
 				<div class="d-flex justify-content-center">
 				<p class="text-right mr-2">
 					</br>
+					{% if tx_data.discount_amount -%}
+					{{ _("Discount") }}:</br>
+					{%- endif %}
 					{% if tx_data.loyalty_points -%}
 					<small class="text-muted">{{ _("Used Points") }}:</small></br>
+					{{ _("Loyalty Benefit") }}:</br>
 					{%- endif %}
-					{{ _("Discount") }}:</br>
 					{{ _("Amount") }}:</br>
 				</p>
 				<p class="text-right ml-2">
-					{{ frappe.utils.fmt_money(total, currency=tx_data.currency) }}</br>
+					{{ frappe.utils.fmt_money(grand_total, currency=tx_data.currency) }}</br>
+					{% if tx_data.discount_amount -%}
+					- {{ frappe.utils.fmt_money(tx_data.discount_amount, currency=tx_data.currency) }}</br>
+					{%- endif %}
 					{% if tx_data.loyalty_points -%}
 					<small class="text-muted">{{ tx_data.loyalty_points[0] }}&emsp;{{ tx_data.loyalty_points[1] }}</small></br>
+					- {{ frappe.utils.fmt_money(tx_data.loyalty_points[2], currency=tx_data.currency) }}</br>
 					{%- endif %}
-					- {{ frappe.utils.fmt_money(tx_data.discount_amount, currency=tx_data.currency) }}</br>
 					= {{ frappe.utils.fmt_money(tx_data.amount, currency=tx_data.currency) }}</br>
 				</p>
 				</div>
@@ -46,7 +51,7 @@
 				</p>
 			{% else -%}
 				<p class="text-center">
-					{{ _("Amount") }}:&emsp;{{ frappe.utils.fmt_money(tx_data.amount, currency=tx_data.currency) }}</br>
+					{{ _("Amount") }}:&emsp;{{ frappe.utils.fmt_money(grand_total, currency=tx_data.currency) }}</br>
 					{{ _("Document") }}:&emsp;{{ tx_data.reference_doctype }}</br>
 					{{ _("Customer") }}:&emsp;{{ payer.get("full_name") }}</br>
 				</p>

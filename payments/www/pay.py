@@ -49,6 +49,10 @@ def get_context(context):
 	psl: PaymentSessionLog = get_psl()
 	state = psl.load_state()
 	context.tx_data: TxData = state.tx_data
+	context.grand_total = state.tx_data.amount + (state.tx_data.discount_amount or 0)
+	if state.tx_data.loyalty_points:
+		context.grand_total += state.tx_data.loyalty_points[2]
+	context.has_discount = state.tx_data.discount_amount or state.tx_data.loyalty_points
 
 	# keep in sync with payment_controller.py
 	terminal_states = {
