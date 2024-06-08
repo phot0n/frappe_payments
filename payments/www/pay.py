@@ -67,35 +67,35 @@ def get_context(context):
 	# A terminal error state would require operator intervention, first
 	if psl.status not in terminal_states.keys():
 		# First Pass: chose payment button
-		if not psl.button:
-			context.render_widget = False
-			context.render_buttons = True
-			context.render_capture = False
-			context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
-			filters = {"enabled": True}
+		# gateway was preselected; e.g. on the backend
+		filters = {"enabled": True}
+		if psl.gateway:
+			filters.update(json.loads(psl.gateway))
 
-			# gateway was preselected; e.g. on the backend
-			if psl.gateway:
-				filters.update(json.loads(psl.gateway))
+		buttons = frappe.get_list(
+			"Payment Button",
+			fields=["name", "icon", "label"],
+			filters=filters,
+		)
 
-			buttons = frappe.get_list(
+		context.payment_buttons = [
+			(load_icon(entry.get("icon")), entry.get("name"), entry.get("label"))
+			for entry in frappe.get_list(
 				"Payment Button",
 				fields=["name", "icon", "label"],
 				filters=filters,
 			)
+		]
+		context.render_buttons = True
 
-			context.payment_buttons = [
-				(load_icon(entry.get("icon")), entry.get("name"), entry.get("label"))
-				for entry in frappe.get_list(
-					"Payment Button",
-					fields=["name", "icon", "label"],
-					filters=filters,
-				)
-			]
+		if not psl.button:
+			context.render_widget = False
+			context.render_capture = False
+			context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
+
 		# Second Pass (Data Capture): capture additonal data if the button requires it
 		elif psl.requires_data_capture:
 			context.render_widget = False
-			context.render_buttons = False
 			context.render_capture = True
 			context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 
@@ -108,7 +108,6 @@ def get_context(context):
 		# Second Pass (Third Party Widget): let the third party widget manage data capture and flow
 		else:
 			context.render_widget = True
-			context.render_buttons = False
 			context.render_capture = False
 			context.logo = frappe.get_website_settings("app_logo") or frappe.get_hooks("app_logo_url")[-1]
 

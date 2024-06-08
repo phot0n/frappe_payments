@@ -93,6 +93,10 @@
 		</div>
 		{% endif %}
 		{% if render_buttons %}
+			{% if render_widget or render_capture %}
+			<hr/>
+			<div class='text-info text-center small my-3'>{{ _("or change payment method") }}:</div>
+			{% endif %}
 			<div id="select-button-errors" class='text-danger text-center small my-3' style='display: none;'></div>
 			{% set primary_button = payment_buttons[0] %}
 			{% set secondary_buttons = payment_buttons[1:] %}
