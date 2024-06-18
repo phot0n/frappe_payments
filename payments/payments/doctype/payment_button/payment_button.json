@@ -96,7 +96,7 @@
   {
    "collapsible": 1,
    "collapsible_depends_on": "eval: doc.enabled",
-   "description": "The code fields of this section are HTML snippets templated via jinja.<br>\n<pre>{\n  \"doc\":     &lt;Instance of PaymentController&gt;,\n  \"payload\": &lt;Instance of RemoteServerInitiationPayload&gt;,\n}</pre>\n<span class=\"text-muted\"><small>This jinja context is specific to the gateway.</small></span>",
+   "description": "The code fields of this section are HTML snippets templated via jinja.<br>\n<pre>{\n  \"doc\":     &lt;Instance of PaymentController&gt;,\n  \"extra\":   &lt;Dict of parsed Extra Payload Json&gt;,\n  \"psl\":     &lt;Dict of PSL&gt;,\n  \"tx_data\": &lt;TX Data&gt;,\n  \"gateway_data\": &lt;Dict of Gateway-specific Pre Data Capture State&gt;, \n}</pre>\n<span class=\"text-muted\"><small>This jinja context is specific to the gateway.</small></span>",
    "fieldname": "button_configuration_section",
    "fieldtype": "Section Break",
    "label": "Button Configuration"
@@ -129,7 +129,7 @@
  ],
  "image_field": "icon",
  "links": [],
- "modified": "2024-05-05 11:33:11.418592",
+ "modified": "2024-06-17 15:09:04.579657",
  "modified_by": "Administrator",
  "module": "Payments",
  "name": "Payment Button",

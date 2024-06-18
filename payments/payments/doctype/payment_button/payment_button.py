@@ -60,9 +60,6 @@ class PaymentButton(Document):
 			"extra": frappe._dict(json.loads(self.extra_payload)),
 		}
 		context.update(state)
-		from pprint import pprint
-
-		pprint(context)
 		return frappe.render_template(self.data_capture, context)
 
 	@property
