@@ -126,7 +126,7 @@ class PaymentController(Document):
 		else:
 			self = gateway
 
-		self.validate_tx_data(tx_data)  # preflight check
+		# self.validate_tx_data(tx_data)  # preflight check
 
 		psl = create_log(
 			tx_data=tx_data,
