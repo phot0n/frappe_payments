@@ -108,6 +108,10 @@ override_doctype_class = {"Web Form": "payments.overrides.payment_webform.Paymen
 # 	}
 # }
 
+ignore_links_on_delete = [
+	"Payment Session Log",
+]
+
 # Scheduled Tasks
 # ---------------
 
