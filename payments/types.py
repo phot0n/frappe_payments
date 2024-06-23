@@ -94,6 +94,8 @@ class TxData:
 	# [Program, Points, Amount]
 	loyalty_points: list[str, float, float] | None  # for display purpose only
 	discount_amount: float | None  # for display purpose only
+	display_reference_doctype: str | None = None
+	display_reference_docname: str | None = None
 	# TODO: tx data for subscriptions, pre-authorized, require-mandate and other flows
 
 

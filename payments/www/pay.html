@@ -15,7 +15,7 @@
 <div class='page-card'>
 	<h5 class='page-card-head text-center'>
 		<span id="refdoc-indicator" class='indicator {{ indicator_color or "blue" }}'>
-			{{ tx_data.reference_docname }}</span>
+			{{ tx_data.display_reference_docname or tx_data.reference_docname }}</span>
 	</h5>
 	<div class="page-card-body">
 		{% block reference_body %}
@@ -46,13 +46,13 @@
 				</p>
 				</div>
 				<p class="text-center">
-					{{ _("Document") }}:&emsp;{{ tx_data.reference_doctype }}</br>
+					{{ _("Document") }}:&emsp;{{ _(tx_data.display_reference_doctype or tx_data.reference_doctype) }}</br>
 					{{ _("Customer") }}:&emsp;{{ payer.get("full_name") }}</br>
 				</p>
 			{% else -%}
 				<p class="text-center">
 					{{ _("Amount") }}:&emsp;{{ frappe.utils.fmt_money(grand_total, currency=tx_data.currency) }}</br>
-					{{ _("Document") }}:&emsp;{{ tx_data.reference_doctype }}</br>
+					{{ _("Document") }}:&emsp;{{ _(tx_data.display_reference_doctype or tx_data.reference_doctype) }}</br>
 					{{ _("Customer") }}:&emsp;{{ payer.get("full_name") }}</br>
 				</p>
 			{%- endif %}
