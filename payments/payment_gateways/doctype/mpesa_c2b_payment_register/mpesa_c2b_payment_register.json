@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
+ "allow_import": 1,
  "autoname": "MPC2B.-.YY.-.MM.-.######",
  "creation": "2024-04-11 13:39:25.887687",
  "default_view": "List",
@@ -32,7 +33,6 @@
   "currency",
   "submit_payment",
   "payment_entry",
-  "amended_from",
   "amended_from"
  ],
  "fields": [
@@ -226,7 +226,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Mpesa Payment Register",
+   "options": "Mpesa C2B Payment Register",
    "print_hide": 1,
    "read_only": 1
   },
@@ -237,15 +237,14 @@
    "no_copy": 1,
    "options": "Mpesa C2B Payment Register",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-11 13:39:25.887687",
+ "modified": "2024-06-21 11:42:30.832569",
  "modified_by": "Administrator",
  "module": "Payment Gateways",
  "name": "Mpesa C2B Payment Register",

@@ -41,7 +41,8 @@ class MpesaC2BPaymentRegister(Document):
             frappe.throw(_("Customer is required"))
         if not self.mode_of_payment:
             frappe.throw(_("Mode of Payment is required"))
-        self.payment_entry = self.create_payment_entry()
+        if self.submit_payment:
+           self.payment_entry = self.create_payment_entry()
 
     def create_payment_entry(self):
         payment_entry = create_payment_entry(
@@ -51,8 +52,10 @@ class MpesaC2BPaymentRegister(Document):
             self.currency,
             self.mode_of_payment,
             self.posting_date,
-            self.transid,
+            
+            self.name,
             self.posting_date,
+            
             None,
             self.submit_payment,
         )
