@@ -23,7 +23,7 @@ def create_custom_pos_fields():
    	{
 			
 			"fieldname": "c2b_mpesa",
-			"label": "C2B Mpesa",
+			"label": "C2B Mpesa Payments",
 			"fieldtype": "Button",
 			"hidden": 1,
 				"insert_after": "request_for_payment",

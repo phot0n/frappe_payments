@@ -12,6 +12,7 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 from payments.payment_gateways.api.m_pesa_api import submit_mpesa_payment
 from erpnext.accounts.utils import get_outstanding_invoices as _get_outstanding_invoices
 from operator import itemgetter
+import ast
 
 
 def create_payment_entry(
@@ -339,7 +340,9 @@ def process_mpesa_c2b_reconciliation():
     currency=invoice.get("currency")
     company=invoice.get("company")
     customer=invoice.get("customer")
-    mode_of_payment="Mpesa Rosslyn"
+    
+    #TODO: after testing, withdraw this static method of payment
+    mode_of_payment="Mpesa-Test"
     
     reconcile_doc = frappe.new_doc("Payment Reconciliation")
     reconcile_doc.party_type = "Customer"
@@ -349,6 +352,8 @@ def process_mpesa_c2b_reconciliation():
         "Customer", customer, company
     )
     reconcile_doc.get_unreconciled_entries()
+    
+    #TODO: remember to do away with method of payment
     payment_entry=submit_mpesa_payment(mpesa_transaction,customer, mode_of_payment)
     args = {
                 "invoices": [],
@@ -402,3 +407,59 @@ def get_available_pos_profiles(company, currency):
         pluck="name",
     )
     return pos_profiles_list
+
+
+#Test for credit balance
+@frappe.whitelist()
+def process_mpesa_c2b_customer_credit():
+    payment_entries_list = frappe.form_dict.get("payment_entries")
+    payment_entries=ast.literal_eval(payment_entries_list)
+    invoice_name = frappe.form_dict.get("invoice_name")
+    invoice = frappe.get_doc("Sales Invoice", invoice_name)
+    currency = invoice.get("currency")
+    company = invoice.get("company")
+    customer = invoice.get("customer")
+    
+    reconcile_doc = frappe.new_doc("Payment Reconciliation")
+    reconcile_doc.party_type = "Customer"
+    reconcile_doc.party = customer
+    reconcile_doc.company = company
+    reconcile_doc.receivable_payable_account = get_party_account("Customer", customer, company)
+    reconcile_doc.get_unreconciled_entries()
+
+    args = {
+        "invoices": [],
+        "payments": [],
+    }
+    
+    frappe.db.commit()
+    
+    args["invoices"].append(
+        {
+            "invoice_type": "Sales Invoice",
+            "invoice_number": invoice.get("name"),
+            "invoice_date": invoice.get("posting_date"),
+            "amount": invoice.get("grand_total"),
+            "outstanding_amount": invoice.get("outstanding_amount"),
+            "currency": invoice.get("currency"),
+            "exchange_rate": 0,
+        }
+    )
+    
+    for payment_entry in payment_entries:
+        payment_entry = frappe.get_doc("Payment Entry", payment_entry)
+        args["payments"].append(
+            {
+                "reference_type": "Payment Entry",
+                "reference_name": payment_entry.get("name"),
+                "posting_date": payment_entry.get("posting_date"),
+                "amount": payment_entry.get("unallocated_amount"),
+                "unallocated_amount": payment_entry.get("unallocated_amount"),
+                "difference_amount": 0,
+                "currency": payment_entry.get("currency"),
+                "exchange_rate": 0,
+            }
+        )
+
+    reconcile_doc.allocate_entries(args)
+    reconcile_doc.reconcile()
