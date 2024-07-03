@@ -66,5 +66,20 @@ $(document).on("payment-processed", function (e, r) {
 		cta.attr("href", r.message.action.href)
 		cta.toggle(true)
 		cta.focus()
+		if (r.message.action.redirect_after_milliseconds) {
+			const message = $("#action-redirect-message");
+			const secondsCounter = $("#action-redirect-message-seconds");
+			let seconds = Math.floor(r.message.action.redirect_after_milliseconds / 1000);
+			secondsCounter.html(seconds);
+      function updateCounter() {
+          seconds--;
+          secondsCounter.html(seconds);
+      }
+			message.toggle(true)
+			setInterval(updateCounter, 1000);
+			setTimeout(function() {
+				window.location.href = r.message.action.href
+			}, r.message.action.redirect_after_milliseconds);
+		}
 	}
 })

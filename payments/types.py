@@ -142,6 +142,7 @@ class Proceeded:
 class ActionAfterProcessed:
 	href: str
 	label: str
+	redirect_after_milliseconds: int | None = None
 
 
 @dataclass
