@@ -54,21 +54,39 @@ gateway_js = """<script src="{{ doc.static_assets_url }}/js/krypton-client/V4.0/
         });
         // KR.openPaymentMethod('CARDS').then().catch()
     });
-    KR.onSubmit(paymentData => {
+	KR.smartForm.onClick(event => {
+		$(document).trigger("payment-submitted");
+		return true;
+	});
+	KR.onError( function(event) {
+		$(document).trigger("payment-processed", {
+			"message": {
+				"action": {"href": window.location.href, "label": "Retry"},
+				"status_changed_to": "Error",
+				"indicator_color": "red",
+				"indicator_color": "red",
+				"message": event.errorMessage,
+			}
+		});
+		KR.hideForm(event.formId)
+		return false;
+	});
+    KR.onSubmit(event => {
 		frappe.call({
 			method:"payments.payment_gateways.doctype.payzen_settings.payzen_settings.notification",
 			freeze: true,
 			headers: {"X-Requested-With": "XMLHttpRequest"},
 			args: {
-				"kr-answer": JSON.stringify(paymentData.clientAnswer),
-				"kr-hash": paymentData.hash,
-				"kr-hash-algorithm": paymentData.hashAlgorithm,
-				"kr-hash-key": paymentData.hashKey,
-				"kr-answer-type": paymentData._type,
+				"kr-answer": JSON.stringify(event.clientAnswer),
+				"kr-hash": event.hash,
+				"kr-hash-algorithm": event.hashAlgorithm,
+				"kr-hash-key": event.hashKey,
+				"kr-answer-type": event._type,
 			},
-			callback: (r) => $(document).trigger("payload-processed", r),
+			callback: (r) => $(document).trigger("payment-processed", r),
 		})
-		KR.hideForm(paymentData.formId)
+		KR.hideForm(event.formId)
+		return false;
 	});
 </script>"""
 

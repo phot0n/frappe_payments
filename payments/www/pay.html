@@ -93,6 +93,7 @@
 		</div>
 		{% endif %}
 		{% if render_buttons %}
+			<div id="button-section">
 			{% if render_widget or render_capture %}
 			<hr/>
 			<div class='text-info text-center small my-3'>{{ _("or change payment method") }}:</div>
@@ -107,6 +108,7 @@
 				<div><button  data-button="{{ secondary_button[1] }}"
 						class='btn btn-secondary btn-sm btn-block btn-pay'>{{ secondary_button[0] }}&ensp;{{ secondary_button[2] }}</button></div>
 				{% endfor %}
+			</div>
 			</div>
 		{% endif %}
 	</div>

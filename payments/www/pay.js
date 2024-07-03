@@ -38,7 +38,11 @@ frappe.ready(function() {
 	});
 });
 
-$(document).on("payload-processed", function (e, r) {
+$(document).on("payment-submitted", function (e) {
+	$("div#button-section").hide()
+})
+
+$(document).on("payment-processed", function (e, r) {
 	if (r.message.status_changed_to) {
 		const status = r.message.status_changed_to;
 		const color = r.message.indicator_color;
