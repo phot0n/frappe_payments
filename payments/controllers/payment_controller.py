@@ -1,6 +1,6 @@
 import json
 
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote
 
 from requests.exceptions import HTTPError
 
@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.base_document import get_controller
 from frappe.email.doctype.email_account.email_account import EmailAccount
-from frappe.desk.form.load import get_automatic_email_link, get_document_email
+from frappe.desk.form.load import get_document_email
 from payments.payments.doctype.payment_session_log.payment_session_log import (
 	create_log,
 )
@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 def _error_value(error, flow):
 	return _(
-		"Our server had an issue processing your {0}. Please contact customer support mentioning: {1}"
+		"Our server had a problem processing your {0}. Please contact customer support mentioning: {1}"
 	).format(flow, error)
 
 
@@ -367,16 +367,28 @@ class PaymentController(Document):
 			)
 			psl.set_processing_payload(response, "Declined")  # commits
 			ret["indicator_color"] = "red"
-			incoming_email = None
-			if automatic_linking_email := get_automatic_email_link():
-				incoming_email = get_document_email(
-					self.state.tx_data.reference_doctype,
-					self.state.tx_data.reference_docname,
-				)
-			if incoming_email := incoming_email or EmailAccount.find_default_incoming():
-				subject = _("Payment declined for: {}").format(self.state.tx_data.reference_docname)
-				body = _("Please help me with ref '{}'").format(psl.name)
-				href = "mailto:{incoming_email.email_id}?subject={subject}"
+
+			incoming_email = get_document_email(
+				self.state.tx_data.reference_doctype,
+				self.state.tx_data.reference_docname,
+			)
+			if not incoming_email:
+				email = EmailAccount.find_default_incoming()
+				incoming_email = email.email_id if email else None
+
+			if incoming_email:
+				params = {
+					"subject": _("Help! Payment declined: {}, {}").format(
+						self.state.tx_data.reference_docname, psl.name
+					),
+					"body": _("Please help me with:\n - PSL: {}\n - RefDoc: {}\n\nThank you!").format(
+						frappe.utils.get_url_to_form("Payment Session Log", psl.name),
+						frappe.utils.get_url_to_form(
+							self.state.tx_data.reference_doctype, self.state.tx_data.reference_docname
+						),
+					),
+				}
+				href = f"mailto:{incoming_email}?{urlencode(params, quote_via=quote)}"
 				action = dict(href=href, label=_("Email Us"))
 			else:
 				action = dict(href=self.get_payment_url(psl.name), label=_("Refresh"))
@@ -405,6 +417,15 @@ class PaymentController(Document):
 				_res = _Processed(**res)
 				processed = Processed(**(ret | _res.__dict__))
 		except Exception as e:
+			# Ensure no details are leaked to the client
+			frappe.local.message_log = [
+				{
+					"message": _("Server Processing Failure!"),
+					"subtitle": _("(during RefDoc processing)"),
+					"body": str(e),
+					"indicator": "red",
+				}
+			]
 			raise RefDocHookProcessingError(psltype) from e
 
 		return processed
@@ -478,6 +499,34 @@ class PaymentController(Document):
 		)
 
 		mute = self._is_server_to_server()
+
+		def get_compensatatory_action(error_log):
+
+			incoming_email = get_document_email(
+				self.state.tx_data.reference_doctype,
+				self.state.tx_data.reference_docname,
+			)
+			if not incoming_email:
+				email = EmailAccount.find_default_incoming()
+				incoming_email = email.email_id if email else None
+
+			if incoming_email:
+				params = {
+					"subject": _("Payment Server Error: {}").format(error_log),
+					"body": _("Reference:\n\n - PSL: {}\n - Error Log: {}\n - RefDoc: {}\n\nThank you!").format(
+						frappe.utils.get_url_to_form("Payment Session Log", psl.name),
+						frappe.utils.get_url_to_form("Error Log", error_log.name),
+						frappe.utils.get_url_to_form(
+							self.state.tx_data.reference_doctype, self.state.tx_data.reference_docname
+						),
+					),
+				}
+				href = f"mailto:{incoming_email}?{urlencode(params, quote_via=quote)}"
+				action = dict(href=href, label=_("Email Us"))
+			else:
+				action = dict(href="/", label=_("Go to Homepage"))
+			return action
+
 		try:
 			processed = self._process_response(psl, response, ref_doc)
 			if self.flags.status_changed_to in self.flowstates.declined:
@@ -486,42 +535,44 @@ class PaymentController(Document):
 					ref_doc.flags.payment_failure_message = msg
 					ref_doc.run_method("on_payment_failed", msg)
 				except Exception:
+					# Ensure no details are leaked to the client
+					frappe.local.message_log = []
 					psl.log_error("Setting failure message on ref doc failed")
 
 		except PayloadIntegrityError:
 			error = psl.log_error("Response validation failure")
 			if not mute:
-				frappe.redirect_to_message(
-					_("Server Error"),
-					_("There's been an issue with your payment."),
-					http_status_code=500,
+				return Processed(
+					message=_("There's been an issue with your payment."),
+					action=get_compensatatory_action(error),
+					status_changed_to=_("Server Error"),
 					indicator_color="red",
+					payload={},
 				)
-				raise frappe.Redirect
 
 		except PaymentControllerProcessingError as e:
 			error = psl.log_error(f"Processing error ({e.psltype})")
 			psl.set_processing_payload(response, "Error")
 			if not mute:
-				frappe.redirect_to_message(
-					_("Server Error"),
-					_error_value(error, e.psltype),
-					http_status_code=500,
+				return Processed(
+					message=_error_value(error, e.psltype),
+					action=get_compensatatory_action(error),
+					status_changed_to=_("Server Error"),
 					indicator_color="red",
+					payload={},
 				)
-				raise frappe.Redirect
 
 		except RefDocHookProcessingError as e:
 			error = psl.log_error(f"Processing failure ({e.psltype} - refdoc hook)")
 			psl.set_processing_payload(response, "Error - RefDoc")
 			if not mute:
-				frappe.redirect_to_message(
-					_("Server Error"),
-					_error_value(error, f"{e.psltype} (via ref doc hook)"),
-					http_status_code=500,
+				return Processed(
+					message=_error_value(error, f"{e.psltype} (via ref doc hook)"),
+					action=get_compensatatory_action(error),
+					status_changed_to=_("Server Error"),
 					indicator_color="red",
+					payload={},
 				)
-				raise frappe.Redirect
 		else:
 			return processed
 		finally:
