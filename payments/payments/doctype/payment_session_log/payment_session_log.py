@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
 	from payments.controllers import PaymentController
+	from payments.payments.doctype.payment_gateway.payment_gateway import PaymentGateway
 	from payments.payments.doctype.payment_button.payment_button import PaymentButton
 
 import collections.abc
@@ -108,8 +109,17 @@ class PaymentSessionLog(Document):
 		)
 
 	def get_controller(self) -> "PaymentController":
-		"""For perfomance reasons, this is not implemented as a dynamic link but a json value
-		so that it is only fetched when absolutely necessary.
+		"""
+		Retrieves the payment controller associated with the current Payment Session Log's gateway.
+
+		This method uses a JSON-encoded gateway value instead of a dynamic link
+		for performance optimization. The controller is only fetched when necessary.
+
+		Returns:
+		    PaymentController: The cached document of the payment controller.
+
+		Raises:
+		    frappe.ValidationError: If no gateway is selected for this Payment Session Log.
 		"""
 		if not self.gateway:
 			self.log_error("No gateway selected yet")
@@ -117,6 +127,25 @@ class PaymentSessionLog(Document):
 		d = json.loads(self.gateway)
 		doctype, docname = d["gateway_settings"], d["gateway_controller"]
 		return frappe.get_cached_doc(doctype, docname)
+
+	def get_gateway(self) -> "PaymentGateway":
+		"""
+		Retrieves the Payment Gateway document associated with the current Payment Session Log.
+
+		The 'gateway' attribute of the Payment Session Log serves a dual purpose,
+		acting as both a data store and a filter for recovering the Payment Gateway document.
+
+		Returns:
+		    Payment Gateway: The most recent Payment Gateway document matching the stored gateway data.
+
+		Raises:
+		    frappe.ValidationError: If no gateway is selected for this Payment Session Log.
+		"""
+		if not self.gateway:
+			self.log_error("No gateway selected yet")
+			frappe.throw(_("No gateway selected for this payment session"))
+		d = json.loads(self.gateway)
+		return frappe.get_cached_doc("Payment Gateway", d["payment_gateway"])
 
 	def get_button(self) -> "PaymentButton":
 		if not self.button:
@@ -157,6 +186,7 @@ def select_button(pslName: str = None, buttonName: str = None) -> str:
 				{
 					"gateway_settings": btn.gateway_settings,
 					"gateway_controller": btn.gateway_controller,
+					"payment_gateway": btn.payment_gateway,
 				}
 			),
 		}

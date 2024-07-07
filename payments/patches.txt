@@ -1,0 +1,4 @@
+[pre_model_sync]
+[post_model_sync]
+execute:import payments.utils.utils; payments.utils.utils.make_custom_fields()
+payments.patches.add_gateway_to_buttons

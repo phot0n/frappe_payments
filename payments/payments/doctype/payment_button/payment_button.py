@@ -25,14 +25,15 @@ class PaymentButton(Document):
 		data_capture: DF.Code | None
 		enabled: DF.Check
 		extra_payload: DF.Code | None
-		gateway_controller: DF.DynamicLink
+		gateway_controller: DF.Data | None
 		gateway_css: DF.Code | None
 		gateway_js: DF.Code | None
-		gateway_settings: DF.Link
+		gateway_settings: DF.Data | None
 		gateway_wrapper: DF.Code | None
 		icon: DF.AttachImage | None
 		implementation_variant: DF.Literal["Third Party Widget", "Data Capture"]
 		label: DF.Data
+		payment_gateway: DF.Link
 	# end: auto-generated types
 
 	# Frontend Assets (widget)

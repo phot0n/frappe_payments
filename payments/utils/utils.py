@@ -175,6 +175,16 @@ def make_custom_fields():
 					"insert_after": "payment_url",
 				}
 			],
+			"Payment Gateway": [
+				{
+					"fieldname": "payment_account",
+					"fieldtype": "Link",
+					"in_list_view": 1,
+					"label": "Payment Account",
+					"options": "Account",
+					"insert_after": "company",
+				}
+			],
 		}
 
 		create_custom_fields(custom_fields)
@@ -200,9 +210,13 @@ def delete_custom_fields():
 		for fieldname in fieldnames:
 			frappe.db.delete("Custom Field", {"name": "Web Form-" + fieldname})
 
-		frappe.db.delete("Custom Field", {"name": "Payment Request-payment_session_log"})
-
 		frappe.clear_cache(doctype="Web Form")
+
+	if "erpnext" in frappe.get_installed_apps():
+		if frappe.get_meta("Payment Request").has_field("payment_session_log"):
+			frappe.db.delete("Custom Field", {"name": "Payment Request-payment_session_log"})
+		if frappe.get_meta("Payment Gateway").has_field("payment_account"):
+			frappe.db.delete("Custom Field", {"name": "Payment Gateway-payment_account"})
 
 
 def before_install():

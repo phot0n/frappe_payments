@@ -326,8 +326,12 @@ class PaymentController(Document):
 		}
 
 		changed = False
+		is_success = self.flags.status_changed_to in self.flowstates.success
+		is_pre_authorized = self.flags.status_changed_to in self.flowstates.pre_authorized
+		is_processing = self.flags.status_changed_to in self.flowstates.processing
+		is_declined = self.flags.status_changed_to in self.flowstates.declined
 
-		if self.flags.status_changed_to in self.flowstates.success:
+		if is_success:
 			changed = "Paid" != psl.status
 			psl.db_set("decline_reason", None)
 			psl.set_processing_payload(response, "Paid")  # commits
@@ -337,7 +341,7 @@ class PaymentController(Document):
 				action=dict(href="/", label=_("Go to Homepage")),
 				**ret,
 			)
-		elif self.flags.status_changed_to in self.flowstates.pre_authorized:
+		elif is_pre_authorized:
 			changed = "Authorized" != psl.status
 			psl.db_set("decline_reason", None)
 			psl.set_processing_payload(response, "Authorized")  # commits
@@ -347,7 +351,7 @@ class PaymentController(Document):
 				action=dict(href="/", label=_("Go to Homepage")),
 				**ret,
 			)
-		elif self.flags.status_changed_to in self.flowstates.processing:
+		elif is_processing:
 			changed = "Processing" != psl.status
 			psl.db_set("decline_reason", None)
 			psl.set_processing_payload(response, "Processing")  # commits
@@ -357,7 +361,7 @@ class PaymentController(Document):
 				action=dict(href="/", label=_("Refresh")),
 				**ret,
 			)
-		elif self.flags.status_changed_to in self.flowstates.declined:
+		elif is_declined:
 			changed = "Declined" != psl.status
 			psl.db_set(
 				{
@@ -400,17 +404,28 @@ class PaymentController(Document):
 
 		try:
 			ref_doc.flags.payment_session = frappe._dict(
-				changed=changed, state=self.state, flags=self.flags, flowstates=self.flowstates
+				changed=changed,
+				is_success=is_success,
+				is_pre_authorized=is_pre_authorized,
+				is_processing=is_processing,
+				is_declined=is_declined,
+				state=self.state,
+				psl=psl,
 			)  # when run as server script: can only set flags
 			res = ref_doc.run_method(
 				hookmethod,
-				changed,
-				self.state,
-				self.flags,
-				self.flowstates,
+				status=frappe._dict(
+					changed=changed,
+					is_success=is_success,
+					is_pre_authorized=is_pre_authorized,
+					is_processing=is_processing,
+					is_declined=is_declined,
+				),
+				state=self.state,
+				psl=psl,
 			)
 			# result from server script run
-			res = ref_doc.flags.payment_result or res
+			res = ref_doc.flags.payment_session.result or res
 			if res:
 				# type check the result value on user implementations
 				res["action"] = ActionAfterProcessed(**res.get("action", {})).__dict__

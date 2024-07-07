@@ -8,7 +8,9 @@
  "field_order": [
   "gateway",
   "gateway_settings",
-  "gateway_controller"
+  "gateway_controller",
+  "column_break_bkjg",
+  "company"
  ],
  "fields": [
   {
@@ -30,10 +32,20 @@
    "fieldtype": "Dynamic Link",
    "label": "Gateway Controller",
    "options": "gateway_settings"
+  },
+  {
+   "fieldname": "column_break_bkjg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
   }
  ],
  "links": [],
- "modified": "2022-07-24 21:17:03.864719",
+ "modified": "2024-07-07 11:40:01.056073",
  "modified_by": "Administrator",
  "module": "Payments",
  "name": "Payment Gateway",
