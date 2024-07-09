@@ -77,7 +77,7 @@ def make_payment(data, reference_doctype, reference_docname):
 	except:
 		pass
 	
-	if not status
+	if not status:
 		status = frappe.get_doc("Mollie Settings", gateway_controller).check_request(data, paymentID)
 	
 	data["paymentUrl"] = status["paymentUrl"]
