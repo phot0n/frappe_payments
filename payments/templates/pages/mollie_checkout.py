@@ -77,7 +77,7 @@ def make_payment(data, reference_doctype, reference_docname):
 
 	try:
 		status_field = frappe.db.get_value(reference_doctype, reference_docname, 'payment_status')
-		if status_field:
+		if status_field == "Completed":
 			status["status"] = status_field
 	except:
 		pass
