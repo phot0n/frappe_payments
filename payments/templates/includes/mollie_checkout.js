@@ -19,7 +19,7 @@
 			callback: function(r){
 				payment = r.message
 				document.getElementById("status").value = payment.status;
-				if (payment.paymentUrl == "Unavailable") {
+				if (payment.paymentUrl == "Completed" || payment.paymentUrl == "Cancelled") {
 					document.getElementById("submit").innerHTML = "{{_("Ready")}}";
 				}
 				else {
