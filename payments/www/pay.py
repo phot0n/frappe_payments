@@ -76,6 +76,7 @@ def get_context(context):
 			"Payment Button",
 			fields=["name", "icon", "label"],
 			filters=filters,
+			order_by="priority",
 		)
 
 		context.payment_buttons = [

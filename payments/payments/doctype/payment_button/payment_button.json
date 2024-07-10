@@ -13,6 +13,7 @@
   "column_break_mjuo",
   "label",
   "enabled",
+  "priority",
   "button_configuration_section",
   "column_break_zwhf",
   "icon",
@@ -133,11 +134,17 @@
    "label": "Payment Gateway",
    "options": "Payment Gateway",
    "reqd": 1
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority"
   }
  ],
  "image_field": "icon",
  "links": [],
- "modified": "2024-07-07 11:59:22.360602",
+ "modified": "2024-07-10 05:38:57.786232",
  "modified_by": "Administrator",
  "module": "Payments",
  "name": "Payment Button",
@@ -163,7 +170,7 @@
   }
  ],
  "quick_entry": 1,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "priority",
+ "sort_order": "ASC",
  "states": []
 }

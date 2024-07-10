@@ -34,6 +34,7 @@ class PaymentButton(Document):
 		implementation_variant: DF.Literal["Third Party Widget", "Data Capture"]
 		label: DF.Data
 		payment_gateway: DF.Link
+		priority: DF.Int
 	# end: auto-generated types
 
 	# Frontend Assets (widget)
