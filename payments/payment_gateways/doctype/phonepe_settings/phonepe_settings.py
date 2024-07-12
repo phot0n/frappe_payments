@@ -72,7 +72,7 @@ def base64_encode_dict(input_dict: dict) -> str:
     data_bytes = json_data.encode('utf-8')
     return base64.b64encode(data_bytes).decode('utf-8')
 
-def create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount,mobile_no) -> dict:
+def create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount, mobile_no) -> dict:
     """Create the main payload dictionary for the API request."""
     redirect_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_redirect')
     #callback_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_callback')
@@ -91,10 +91,10 @@ def create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amoun
     }
 
 @frappe.whitelist(allow_guest=True)
-def initiate_payment(merchant_txn_id, merchant_user_id, amount):
+def initiate_payment(merchant_txn_id, merchant_user_id, amount, mobile_no):
     """Make a payment request to the PhonePe API."""
     phonepe_config = get_phonepe_config()
-    main_payload = create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount)
+    main_payload = create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount, mobile_no)
     index = phonepe_config['index']
     endpoint = phonepe_config['pay_endpoint']
     salt_key = phonepe_config['saltKey']
