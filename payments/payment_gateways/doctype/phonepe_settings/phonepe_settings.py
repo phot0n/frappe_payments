@@ -20,18 +20,9 @@ from frappe.utils import (
     get_request_site_address,
     get_url,
 )
-from frappe.utils.password import get_decrypted_password
-from paytmchecksum import generateSignature, verifySignature
-
-from payments.utils import create_payment_gateway
-
 
 class PhonePeSettings(Document):
     supported_currencies = ["INR"]
-
-    def validate(self):
-        create_payment_gateway("Phonepe")
-        call_hook_method("payment_gateway_enabled", gateway="Phonepe")
 
     def validate_transaction_currency(self, currency):
         if currency not in self.supported_currencies:
@@ -81,28 +72,29 @@ def base64_encode_dict(input_dict: dict) -> str:
     data_bytes = json_data.encode('utf-8')
     return base64.b64encode(data_bytes).decode('utf-8')
 
-def create_main_payload(phonepe_config) -> dict:
+def create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount,mobile_no) -> dict:
     """Create the main payload dictionary for the API request."""
-    redirect_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.verify_transaction')
+    redirect_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_redirect')
+    #callback_url = 'https://dnaretail.in/api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_callback'
     return {
         "merchantId": phonepe_config["merchantId"],
-        "merchantTransactionId": "mnk1kijm857q",
-        "merchantUserId": "MUID123",
-        "amount": 2500,
+        "merchantTransactionId": merchant_txn_id,
+        "merchantUserId": merchant_user_id,
+        "amount": amount, 
         "redirectUrl": redirect_url,
         "redirectMode": "POST",
         "callbackUrl": redirect_url,
-        "mobileNumber": "9999999999",
+        "mobileNumber": mobile_no,
         "paymentInstrument": {
             "type": "PAY_PAGE"
         }
     }
 
 @frappe.whitelist(allow_guest=True)
-def initiate_payment():
+def initiate_payment(merchant_txn_id, merchant_user_id, amount):
     """Make a payment request to the PhonePe API."""
     phonepe_config = get_phonepe_config()
-    main_payload = create_main_payload(phonepe_config)
+    main_payload = create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount)
     index = phonepe_config['index']
     endpoint = phonepe_config['pay_endpoint']
     salt_key = phonepe_config['saltKey']
@@ -144,20 +136,15 @@ def redirect_to_paymentPage(response_data):
         print("Invalid response data. Unable to find payment URL.")
 
 @frappe.whitelist(allow_guest=True)
-def verify_transaction(**phonepe_response):
+def process_redirect(**phonepe_response):
     # Get the JSON response from the request
     merchant_transaction_id = phonepe_response.pop('transactionId',None)
-    checksum = phonepe_response.pop('checksum',None)
-    message = f'Checksum Valid:{checksum}'
-    calculated_checksum = checksum
-    if calculated_checksum == checksum:
-        #merchant_transaction_id = phonepe_response.pop('transactionId',None)
+    if merchant_transaction_id:
         payment_status = check_payment_status(merchant_transaction_id)
-        return f'Checksum received is valid: {payment_status}'
+        finalize_request(merchant_transaction_id, payment_status)
+        #return f'Payment successful {payment_status}'
     else:
-        raise Exception("Invalid checksum")
-    return message
-
+        raise Exception("Merchant Transaction Id missing in the request")
 
 def check_payment_status(merchant_transaction_id):
     phonepe_config = get_phonepe_config()
@@ -179,28 +166,46 @@ def check_payment_status(merchant_transaction_id):
         'accept': 'application/json',
     }
     payment_status_response = requests.get(request_url, headers=headers)
-    finalize_request(payment_status_response.json())
+    #finalize_request(payment_status_response.json())
     return payment_status_response.json()
 
-def finalize_request(payment_status_response):
-    if payment_status_response['code'] == 'PAYMENT_SUCCESS':
-        print("Payment successful. Do something here.")
-        return {'code': 'PAYMENT_SUCCESS', 'amount': payment_status_response['data']['amount'], 'state': payment_status_response['data']['state'], 'responseCode': payment_status_response['data']['responseCode']}
-    elif payment_status_response['code'] == 'BAD_REQUEST':
-        print("Bad request. Handle it here.")
-    elif payment_status_response['code'] == 'AUTHORIZATION_FAILED':
-        print("Authorization failed. Handle it here.")
-    elif payment_status_response['code'] == 'INTERNAL_SERVER_ERROR':
-        print("Internal server error. Handle it here.")
-    elif payment_status_response['code'] == 'TRANSACTION_NOT_FOUND':
-        print("Transaction not found. Handle it here.")
-    elif payment_status_response['code'] == 'PAYMENT_ERROR':
-        print("Payment error. Handle it here.")
-    elif payment_status_response['code'] == 'PAYMENT_PENDING':
-        print("Payment pending. Your final payment status may take up to 20 minutes to get updated. Please check after some time.")
-    elif payment_status_response['code'] == 'PAYMENT_DECLINED':
-        print("Payment declined. Handle it here.")
-    elif payment_status_response['code'] == 'TIMED_OUT':
-        print("Request timed out. Handle it here.")
+def finalize_request(merchant_transaction_id, payment_status_response):
+    request = frappe.get_doc("Integration Request", merchant_transaction_id)
+    transaction_data = frappe._dict(json.loads(request.data))
+    redirect_to = transaction_data.get("redirect_to") or None
+    redirect_message = transaction_data.get("redirect_message") or None
+
+    if payment_status_response["code"] == "PAYMENT_SUCCESS":
+        if transaction_data.reference_doctype and transaction_data.reference_docname:
+            custom_redirect_to = None
+            try:
+                custom_redirect_to = frappe.get_doc(
+                    transaction_data.reference_doctype, transaction_data.reference_docname
+                ).run_method("on_payment_authorized", "Completed")
+                request.db_set("status", "Completed")
+            except Exception:
+                request.db_set("status", "Failed")
+                frappe.log_error(frappe.get_traceback())
+
+            if custom_redirect_to:
+                redirect_to = custom_redirect_to
+
+            redirect_url = "/payment-success"
     else:
-        print("Unknown response. Handle it here.")
+        request.db_set("status", "Failed")
+        redirect_url = "/payment-failed"
+
+    if redirect_to:
+        redirect_url += "?" + urlencode({"redirect_to": redirect_to})
+    if redirect_message:
+        redirect_url += "&" + urlencode({"redirect_message": redirect_message})
+
+    frappe.local.response["type"] = "redirect"
+    frappe.local.response["location"] = redirect_url
+
+def get_gateway_controller(doctype, docname):
+	reference_doc = frappe.get_doc(doctype, docname)
+	gateway_controller = frappe.db.get_value(
+		"Payment Gateway", reference_doc.payment_gateway, "gateway_controller"
+	)
+	return gateway_controller
