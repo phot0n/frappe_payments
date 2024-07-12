@@ -75,7 +75,7 @@ def base64_encode_dict(input_dict: dict) -> str:
 def create_main_payload(phonepe_config, merchant_txn_id, merchant_user_id, amount,mobile_no) -> dict:
     """Create the main payload dictionary for the API request."""
     redirect_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_redirect')
-    #callback_url = 'https://dnaretail.in/api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_callback'
+    #callback_url = get_url(f'./api/method/payments.payment_gateways.doctype.phonepe_settings.phonepe_settings.process_callback')
     return {
         "merchantId": phonepe_config["merchantId"],
         "merchantTransactionId": merchant_txn_id,
