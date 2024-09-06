@@ -6,7 +6,7 @@ from frappe.rate_limiter import rate_limit
 from frappe.utils import flt
 from frappe.website.doctype.web_form.web_form import WebForm
 
-from payments.utils import get_payment_gateway_controller
+from payments.utils import get_payment_controller
 
 
 class PaymentWebForm(WebForm):
@@ -24,7 +24,7 @@ class PaymentWebForm(WebForm):
 
 	def get_payment_gateway_url(self, doc):
 		if getattr(self, "accept_payment", False):
-			controller = get_payment_gateway_controller(self.payment_gateway)
+			controller = get_payment_controller(self.payment_gateway)
 
 			title = f"Payment for {doc.doctype} {doc.name}"
 			amount = self.amount

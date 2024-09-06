@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "autoname": "field:gateway_name",
+ "creation": "2018-02-05 13:46:12.101852",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gateway_name",
+  "brand",
+  "shop_id",
+  "challenge_3ds",
+  "column_break_vtxq",
+  "use_sandbox",
+  "static_assets_url",
+  "api_url",
+  "section_break_2",
+  "test_password",
+  "test_hmac_key",
+  "test_public_key",
+  "column_break_xbif",
+  "production_password",
+  "production_hmac_key",
+  "production_public_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "gateway_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Payment Gateway Name",
+   "options": "Company",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "0",
+   "fieldname": "use_sandbox",
+   "fieldtype": "Check",
+   "label": "Use Sandbox"
+  },
+  {
+   "bold": 1,
+   "fieldname": "shop_id",
+   "fieldtype": "Data",
+   "label": "Shop ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_vtxq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "test_password",
+   "fieldtype": "Password",
+   "label": "Test Password",
+   "mandatory_depends_on": "use_sandbox"
+  },
+  {
+   "fieldname": "column_break_xbif",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "production_password",
+   "fieldtype": "Password",
+   "label": "Production Password",
+   "mandatory_depends_on": "eval:!doc.use_sandbox"
+  },
+  {
+   "description": "Used to select api url and static assets url.",
+   "fieldname": "brand",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Brand",
+   "options": "Clic&Pay By groupe Cr\u00e9dit du Nord\nCobro Inmediato\nEpayNC\nLyra Collect\nMi Cuenta Web\nPayty\nPayZen India\nPayZen LATAM\nPayZen Brazil\nPayZen Europe\nScellius\nSogecommerce\nSystempay",
+   "reqd": 1
+  },
+  {
+   "fieldname": "static_assets_url",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Static Assets URL"
+  },
+  {
+   "fieldname": "api_url",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "API URL"
+  },
+  {
+   "fieldname": "test_public_key",
+   "fieldtype": "Data",
+   "label": "Test Public Key",
+   "mandatory_depends_on": "use_sandbox"
+  },
+  {
+   "fieldname": "production_public_key",
+   "fieldtype": "Data",
+   "label": "Production Public Key",
+   "mandatory_depends_on": "eval:!doc.use_sandbox"
+  },
+  {
+   "fieldname": "test_hmac_key",
+   "fieldtype": "Password",
+   "label": "Test HMAC Key",
+   "mandatory_depends_on": "use_sandbox"
+  },
+  {
+   "fieldname": "production_hmac_key",
+   "fieldtype": "Password",
+   "label": "Production HMAC Key",
+   "mandatory_depends_on": "eval:!doc.use_sandbox"
+  },
+  {
+   "default": "NO_PREFERENCE",
+   "documentation_url": "https://docs.lyra.com/en/rest/V4.0/api/playground/Charge/CreatePayment#strongAuthentication",
+   "fieldname": "challenge_3ds",
+   "fieldtype": "Select",
+   "label": "3DS Challenge",
+   "options": "DISABLED\nCHALLENGE_REQUESTED\nCHALLENGE_MANDATE\nNO_PREFERENCE\nAUTO"
+  }
+ ],
+ "links": [],
+ "modified": "2024-04-12 16:40:50.615981",
+ "modified_by": "Administrator",
+ "module": "Payment Gateways",
+ "name": "Payzen Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
