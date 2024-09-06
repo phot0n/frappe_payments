@@ -46,6 +46,8 @@ def get_context(context):
 
 	# always
 
+	context.debug = frappe.form_dict.get('debug') == '1'
+
 	psl: PaymentSessionLog = get_psl()
 	state = psl.load_state()
 	context.tx_data: TxData = state.tx_data

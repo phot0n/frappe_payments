@@ -66,6 +66,37 @@
 		<span id="message-wrapper" style='display: none;'><br/>
 		  {{ _("Note") }}: <span id="message"></span></span>
 		</p>
+		{% if debug %}
+		<div id="debug-info" class="text-center" style="margin-top: 20px; word-wrap: break-word;">
+			<h6 style="font-size: 10px;">Debug Information:</h6>
+			<p style="font-size: 8px;">
+			DOM Loaded: <span id="dom-loaded">Not yet</span><br/>
+			JS Libraries: <span id="js-libraries">Checking...</span><br/>
+			</p>
+		</div>
+		<script>
+			console.log('Debug mode enabled');
+			window.onerror = function(message, source, lineno, colno, error) {
+				console.error('JavaScript error:', message, 'at', source, 'line', lineno);
+				var debugInfo = document.getElementById('debug-info');
+				if (debugInfo) {
+					debugInfo.innerHTML += '<p style="font-size: 8px; color: red;">Error: ' + message + ' at ' + source + ' line ' + lineno + '</p>';
+				}
+			};
+			document.addEventListener('DOMContentLoaded', function() {
+				document.getElementById('dom-loaded').textContent = 'Yes';
+				console.log('DOM fully loaded');
+
+				var libraries = [];
+				if (typeof jQuery !== 'undefined') libraries.push('jQuery');
+				if (typeof frappe !== 'undefined') libraries.push('Frappe');
+				if (typeof _ !== 'undefined') libraries.push('Underscore.js');
+
+				document.getElementById('js-libraries').textContent = libraries.join(', ') || 'None detected';
+				console.log('Detected libraries:', libraries);
+			});
+		</script>
+		{% endif %}
 		{% if logo %}
 		<img
 			class="app-logo mx-auto d-block"
@@ -125,6 +156,7 @@
 	frappe.boot = {{boot}}
 </script>
 {{ include_script('website-core.bundle.js') }}
+
 {% endblock %}
 
 {% set web_include_js=[] %}
