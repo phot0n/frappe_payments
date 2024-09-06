@@ -84,8 +84,14 @@
 				}
 			};
 
-			// Create a list of default window properties
+			// Create a list of default window properties and known globals to exclude
 			var defaultProps = Object.getOwnPropertyNames(window);
+			var excludeList = [
+				'locals', 'NEWLINE', 'TAB', 'UP_ARROW', 'DOWN_ARROW',
+				'cur_frm', 'cstr', 'cint', 'toTitle', 'is_null', 'copy_dict', 'validate_email', 'validate_phone',
+				'validate_name', 'validate_url', 'nth', 'has_words', 'has_common', 'repl', 'replace_all', 'strip_html',
+				'strip', 'lstrip', 'rstrip', '__', 'website', 'valid_email', 'is_html', 'ask_to_login', 'msgprint'
+			];
 
 			document.addEventListener('DOMContentLoaded', function() {
 				document.getElementById('dom-loaded').textContent = 'Yes';
@@ -96,7 +102,7 @@
 
 				// Find new properties (likely to be libraries or global variables)
 				var newProps = currentProps.filter(function(prop) {
-					return defaultProps.indexOf(prop) === -1;
+					return defaultProps.indexOf(prop) === -1 && excludeList.indexOf(prop) === -1;
 				});
 
 				var librariesElement = document.getElementById('global-variables');
