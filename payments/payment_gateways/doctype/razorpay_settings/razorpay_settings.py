@@ -79,7 +79,7 @@ from payments.utils import create_payment_gateway
 
 
 class RazorpaySettings(Document):
-	supported_currencies = ["INR"]
+	supported_currencies = ("INR",)
 
 	def init_client(self):
 		if self.api_key:
@@ -251,8 +251,8 @@ class RazorpaySettings(Document):
 
 	def authorize_payment(self):
 		"""
-		An authorization is performed when user’s payment details are successfully authenticated by the bank.
-		The money is deducted from the customer’s account, but will not be transferred to the merchant’s account
+		An authorization is performed when user's payment details are successfully authenticated by the bank.
+		The money is deducted from the customer's account, but will not be transferred to the merchant's account
 		until it is explicitly captured by merchant.
 		"""
 		data = json.loads(self.integration_request.data)
@@ -306,8 +306,8 @@ class RazorpaySettings(Document):
 				if custom_redirect_to:
 					redirect_to = custom_redirect_to
 
-			redirect_url = "payment-success?doctype={}&docname={}".format(
-				self.data.reference_doctype, self.data.reference_docname
+			redirect_url = (
+				f"payment-success?doctype={self.data.reference_doctype}&docname={self.data.reference_docname}"
 			)
 		else:
 			redirect_url = "payment-failed"
@@ -341,7 +341,7 @@ class RazorpaySettings(Document):
 		settings = self.get_settings({})
 
 		try:
-			resp = make_post_request(
+			make_post_request(
 				f"https://api.razorpay.com/v1/subscriptions/{subscription_id}/cancel",
 				auth=(settings.api_key, settings.api_secret),
 			)
@@ -393,7 +393,9 @@ def capture_payment(is_sandbox=False, sanbox_response=None):
 
 				if resp.get("status") == "authorized":
 					resp = make_post_request(
-						"https://api.razorpay.com/v1/payments/{}/capture".format(data.get("razorpay_payment_id")),
+						"https://api.razorpay.com/v1/payments/{}/capture".format(
+							data.get("razorpay_payment_id")
+						),
 						auth=(settings.api_key, settings.api_secret),
 						data={"amount": data.get("amount")},
 					)

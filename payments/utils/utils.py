@@ -1,7 +1,8 @@
+from contextlib import contextmanager
+
 import click
 import frappe
 from frappe import _
-from contextlib import contextmanager
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
