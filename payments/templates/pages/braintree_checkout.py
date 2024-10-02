@@ -2,6 +2,7 @@
 # License: MIT. See LICENSE
 
 import json
+import urllib.parse
 
 import frappe
 from frappe import _
@@ -33,7 +34,7 @@ def get_context(context):
 	# all these keys exist in form_dict
 	if not (set(expected_keys) - set(list(frappe.form_dict))):
 		for key in expected_keys:
-			context[key] = frappe.form_dict[key]
+			context[key] = urllib.parse.unquote(frappe.form_dict[key])
 
 		context.client_token = get_client_token(context.reference_docname)
 
