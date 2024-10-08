@@ -201,7 +201,7 @@ class RazorpaySettings(Document):
 		# Creating Orders https://razorpay.com/docs/api/orders/
 
 		# convert rupees to paisa
-		kwargs["amount"] *= 100
+		kwargs["amount"] = int(kwargs["amount"] * 100)
 
 		# Create integration log
 		integration_request = create_request_log(kwargs, service_name="Razorpay")
