@@ -1,6 +1,7 @@
 # Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
 # License: MIT. See LICENSE
 import json
+import urllib.parse
 
 import frappe
 from frappe import _
@@ -16,7 +17,8 @@ def get_context(context):
 	paytm_config = get_paytm_config()
 
 	try:
-		doc = frappe.get_doc("Integration Request", frappe.form_dict["order_id"])
+		order_id = urllib.parse.unquote(frappe.form_dict.get("order_id", ""))
+		doc = frappe.get_doc("Integration Request", order_id)
 
 		context.payment_details = get_paytm_params(json.loads(doc.data), doc.name, paytm_config)
 

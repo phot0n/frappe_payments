@@ -1,6 +1,7 @@
 # Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
 # License: MIT. See LICENSE
 import json
+import urllib.parse
 
 import frappe
 from frappe import _
@@ -30,7 +31,7 @@ def get_context(context):
 		payment_details = json.loads(doc.data)
 
 		for key in expected_keys:
-			context[key] = payment_details[key]
+			context[key] = urllib.parse.unquote(payment_details.get(key, ""))
 
 		context["token"] = frappe.form_dict["token"]
 		context["amount"] = flt(context["amount"])
