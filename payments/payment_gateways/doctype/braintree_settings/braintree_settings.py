@@ -269,11 +269,17 @@ class BraintreeSettings(Document):
 			status = "Error"
 			redirect_url = "payment-failed"
 
-		if redirect_to:
-			redirect_url += "?" + urlencode({"redirect_to": redirect_to})
-		if redirect_message:
-			redirect_url += "&" + urlencode({"redirect_message": redirect_message})
+		get_parameters = [
+			("doctype", self.data.reference_doctype),
+			("docname", self.data.reference_docname),
+		]
 
+		if redirect_to:
+			get_parameters.append(("redirect_to", redirect_to))
+		if redirect_message:
+			get_parameters.append(("redirect_message", redirect_message))
+
+		redirect_url += "?" + urlencode(get_parameters)
 		return {"redirect_to": redirect_url, "status": status}
 
 
