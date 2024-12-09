@@ -64,9 +64,9 @@ More Details:
 
 import json
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 import frappe
-import pytz
 from frappe import _
 from frappe.integrations.utils import create_request_log, make_post_request
 from frappe.model.document import Document
@@ -379,7 +379,7 @@ def create_recurring_profile(token, payerid):
 		status_changed_to = "Completed" if data.get("starting_immediately") or updating else "Verified"
 
 		starts_at = get_datetime(subscription_details.get("start_date")) or frappe.utils.now_datetime()
-		starts_at = starts_at.replace(tzinfo=pytz.timezone(get_system_timezone())).astimezone(pytz.utc)
+		starts_at = starts_at.replace(tzinfo=ZoneInfo(get_system_timezone())).astimezone(ZoneInfo("UTC"))
 
 		# "PROFILESTARTDATE": datetime.utcfromtimestamp(get_timestamp(starts_at)).isoformat()
 		params.update({"PROFILESTARTDATE": starts_at.isoformat()})
