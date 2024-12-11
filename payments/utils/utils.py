@@ -112,7 +112,7 @@ def delete_custom_fields():
 			"payment_gateway",
 			"payments_cb",
 			"payments_sb",
-			"payments_tab"
+			"payments_tab",
 		)
 
 		for fieldname in fieldnames:
