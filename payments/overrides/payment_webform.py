@@ -37,7 +37,7 @@ class PaymentWebForm(WebForm):
 
 			if amount is None or Decimal(amount) <= 0:
 				return frappe.utils.get_url(self.success_url or self.route)
-			
+
 			# Set Payer Name
 			payer_name = frappe.utils.get_fullname(frappe.session.user)
 			if self.payer_name_based_on_field:
