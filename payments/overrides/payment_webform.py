@@ -54,6 +54,7 @@ class PaymentWebForm(WebForm):
 				"description": title,
 				"reference_doctype": doc.doctype,
 				"reference_docname": doc.name,
+				"payment_gateway": self.payment_gateway,
 				"payer_email": payer_email,
 				"payer_name": payer_name,
 				"order_id": doc.name,
